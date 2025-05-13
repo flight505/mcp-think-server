@@ -1,14 +1,10 @@
-import { FastMCP } from 'fastmcp';
-import { config } from '../config.js';
-import { wrapFastMCP, ensureDependencies } from '../tools/FastMCPAdapter.js';
-import { registerAllTools } from './tools.js';
-import { setupResources } from './resources.js';
-import { createLogger } from '../utils/logger.js';
-import { initializeProcess, cleanupProcess, ProcessInfo, createCleanupScript } from '../utils/process.js';
-import { taskStorage } from '../tasks/storage.js';
-
-// Create logger
-const logger = createLogger('core');
+import { FastMCP } from "fastmcp";
+import { config } from "../config.js";
+import { wrapFastMCP, ensureDependencies } from "../tools/FastMCPAdapter.js";
+import { registerAllTools } from "./tools.js";
+import { setupResources } from "./resources.js";
+import { initializeProcess, cleanupProcess, ProcessInfo, createCleanupScript } from "../utils/process.js";
+import { taskStorage } from "../tasks/storage.js";
 
 // Server state globals
 export const serverState = {
@@ -20,80 +16,82 @@ export const serverState = {
 };
 
 /**
- * Initialize the MCP Think Tank server instance
+ * Initialize the server
+ * @returns Initialized FastMCP server
  */
-export async function initializeServer() {
-  // Ensure all dependencies are installed
+export async function initializeServer(): Promise<FastMCP> {
+  // Initialize the process
+  serverState.processInfo = await initializeProcess();
+  
+  // Make sure we have all necessary dependencies
   await ensureDependencies();
-
-  // Initialize process tracking
-  serverState.processInfo = initializeProcess();
-
-  // Detect if tool scanning is in progress
-  const isToolScanMode = process.env.SMITHERY_TOOL_SCAN === 'true' || 
-                        process.argv.includes('--tool-scan') ||
-                        process.argv.includes('--scan-tools');
-
-  // Create FastMCP server
+  
+  // Create server instance
   const server = new FastMCP({
     name: "MCP Think Tank",
-    version: config.version as `${number}.${number}.${number}`,
-    // Add instructions field for better tool scanning behavior
-    instructions: isToolScanMode 
-      ? "MCP Think Tank provides tools for structured reasoning, knowledge graph memory, and web research. All tools support lazy loading." 
-      : undefined
+    version: config.version as `${number}.${number}.${number}`
   });
-
-  // Initialize server
-  wrapFastMCP(server);
   
-  // Register tools and resources
-  registerAllTools(server);
-  setupResources(server);
+  // Wrap server with our adapters
+  wrapFastMCP(server);
 
-  // Set up signal handlers for clean shutdown
-  process.on('SIGINT', gracefulShutdown);
-  process.on('SIGTERM', gracefulShutdown);
-  process.on('disconnect', () => {
-    logger.warn('Parent process disconnected, shutting down...');
+  // Set up event handlers
+  process.on("SIGINT", gracefulShutdown);
+  process.on("SIGTERM", gracefulShutdown);
+  
+  // Handle parent process disconnection (if running as a child process)
+  process.on("disconnect", () => {
+    console.error("[WARN] [core] Parent process disconnected, shutting down...");
     gracefulShutdown();
   });
   
-  // Set up error handlers
-  process.on('uncaughtException', (error: Error) => {
-    logger.error(`Uncaught exception: ${error.message}`, error);
+  // Handle uncaught exceptions
+  process.on("uncaughtException", (error) => {
+    console.error(`[ERROR] [core] Uncaught exception: ${error.message}`);
+    gracefulShutdown();
+  });
+  
+  process.on("unhandledRejection", (reason, promise) => {
+    console.error("[ERROR] [core] Critical error detected, shutting down server...");
     
-    // For severe errors, consider shutting down to prevent zombie processes
-    if (error.message.includes('EADDRINUSE') || error.message.includes('port already in use')) {
-      logger.error('Critical error detected, shutting down server...');
-      gracefulShutdown();
+    // Try to extract error details
+    let errorMessage = "Unknown reason";
+    
+    if (reason instanceof Error) {
+      errorMessage = reason.message;
+    } else if (reason) {
+      errorMessage = String(reason);
     }
+    
+    console.error(`[ERROR] [core] Unhandled rejection: ${errorMessage}`);
+    gracefulShutdown();
   });
-
-  process.on('unhandledRejection', (reason: unknown) => {
-    const errorMessage = reason instanceof Error ? reason.message : String(reason);
-    const errorObj = reason instanceof Error ? reason : undefined;
-    logger.error(`Unhandled rejection: ${errorMessage}`, errorObj);
-  });
-
+  
+  // Register resource templates
+  await setupResources(server);
+  
+  // Register all tools
+  await registerAllTools(server);
+  
+  // Set up auto-shutdown timer
+  resetInactivityTimer();
+  
   return server;
 }
 
 /**
- * Reset inactivity timer
+ * Reset the inactivity timer
  */
-export function resetInactivityTimer() {
-  // Auto shutdown after 30 minutes of inactivity by default, can be overridden with AUTO_SHUTDOWN_MS
-  const autoShutdownMs = config.autoShutdownMs;
-
+export function resetInactivityTimer(): void {
+  const { autoShutdownMs } = config;
+  
   if (serverState.inactivityTimer) {
     clearTimeout(serverState.inactivityTimer);
-    serverState.inactivityTimer = null;
   }
   
   if (autoShutdownMs > 0) {
     serverState.inactivityTimer = setTimeout(() => {
-      logger.info(`Server inactive for ${autoShutdownMs}ms, shutting down...`);
+      console.error(`[INFO] [core] Server inactive for ${autoShutdownMs}ms, shutting down...`);
       gracefulShutdown();
     }, autoShutdownMs);
   }
@@ -103,10 +101,10 @@ export function resetInactivityTimer() {
  * Graceful shutdown function
  */
 export function gracefulShutdown() {
-  logger.info('Shutting down MCP Think Tank server...');
+  console.error("[INFO] [core] Shutting down MCP Think Tank server...");
   
   // Clear any pending timeouts in task storage
-  if (taskStorage && typeof taskStorage.clearAllTimeouts === 'function') {
+  if (taskStorage && typeof taskStorage.clearAllTimeouts === "function") {
     taskStorage.clearAllTimeouts();
   }
   
@@ -132,16 +130,23 @@ export function gracefulShutdown() {
     // Save any pending tasks
     taskStorage.saveImmediately();
     
-    logger.info('Server shut down successfully');
+    console.error("[INFO] [core] Server shut down successfully");
     process.exit(0);
   } catch (error) {
-    logger.error(`Error during shutdown: ${error instanceof Error ? error.message : String(error)}`, 
-      error instanceof Error ? error : undefined);
+    console.error(`[ERROR] [core] Error during shutdown: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 }
 
+/**
+ * Log a message
+ * @param message Message to log
+ */
+export function log(message: string): void {
+  console.error(message);
+}
+
 // For backward compatibility
 export const safeErrorLog = (message: string) => {
-  logger.error(message);
-}; 
+  console.error(message);
+};

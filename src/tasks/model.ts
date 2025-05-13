@@ -2,14 +2,29 @@ import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
 /**
- * Task status options
+ * Task status
  */
 export type TaskStatus = 'todo' | 'in-progress' | 'blocked' | 'done';
 
 /**
- * Task priority options
+ * Task priority
  */
 export type TaskPriority = 'low' | 'medium' | 'high';
+
+/**
+ * Task object
+ */
+export interface Task {
+  id: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  created: string;
+  updated?: string;
+  tags?: string[];
+  dependsOn?: string[];
+  due?: string;
+}
 
 /**
  * Task schema definition
@@ -51,10 +66,7 @@ export const taskUpdateSchema = z.object({
   dependsOn: z.array(z.string().uuid()).optional()
 });
 
-/**
- * Task interface matching schema
- */
-export type Task = z.infer<typeof taskSchema>;
+// Task interface already defined above
 
 /**
  * New task interface matching schema

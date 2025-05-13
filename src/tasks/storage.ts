@@ -1,337 +1,321 @@
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import { Task, TaskSchema } from './schemas.js';
-import { createDirectory } from '../utils/fs.js';
-import { createLogger } from '../utils/logger.js';
-import { Mutex } from 'async-mutex';
-import { z } from 'zod';
-
-// Extract types from schema for use in code
-type TaskStatus = z.infer<typeof TaskSchema.shape.status>;
-type TaskPriority = z.infer<typeof TaskSchema.shape.priority>;
-
-const logger = createLogger('taskStorage');
-
-// Get tasks path from environment or use default
-const tasksPath = process.env.TASKS_PATH || path.join(os.homedir(), '.mcp-think-tank/tasks.jsonl');
-
-// Ensure directory exists
-createDirectory(path.dirname(tasksPath));
-
-// Safely log errors to stderr without interfering with stdout JSON
-const safeErrorLog = (message: string) => {
-  // Only log in debug mode or redirect to stderr
-  if (process.env.MCP_DEBUG === 'true') {
-    process.stderr.write(`${message}\n`);
-  }
-};
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
+import { EventEmitter } from 'events';
+import { homedir } from 'os';
+import { Task, TaskStatus } from './model.js';
 
 /**
- * Task storage class for managing task persistence
+ * Storage for tasks
  */
-export class TaskStorage {
+export class TaskStorage extends EventEmitter {
   private tasks: Map<string, Task> = new Map();
   private filePath: string;
-  private saveTimer: NodeJS.Timeout | null = null;
-  private saveInterval: number = 1000; // 1 second
-  private mutex: Mutex = new Mutex();
+  private isLoaded: boolean = false;
+  private timeouts: Map<string, NodeJS.Timeout> = new Map();
   
   /**
-   * Create new task storage instance
-   * 
-   * @param filePath Optional custom path for task storage
+   * Create a new TaskStorage instance
+   * @param filePath Path to the storage file (optional, defaults to ~/.mcp-think-tank/tasks.jsonl)
    */
   constructor(filePath?: string) {
-    // Determine file path
-    this.filePath = filePath || path.join(os.homedir(), '.mcp-think-tank', 'tasks.jsonl');
-    
-    // Ensure directory exists
-    this.ensureDirectoryExists();
-    
-    // Load initial tasks
-    this.loadTasks();
-    
-    logger.info(`Task storage initialized at ${this.filePath}`);
+    super();
+    this.filePath = filePath || path.join(homedir(), '.mcp-think-tank', 'tasks.jsonl');
+    this.load();
   }
   
   /**
-   * Create a new task
-   * 
+   * Add a new task
    * @param task Task to add
-   * @returns The added task
+   * @returns Added task
    */
-  async addTask(task: Task): Promise<Task> {
-    return await this.mutex.runExclusive(async () => {
-      if (this.tasks.has(task.id)) {
-        throw new Error(`Task with ID ${task.id} already exists`);
-      }
-      
-      this.tasks.set(task.id, task);
-      
-      // Schedule save
-      this.scheduleSave();
-      
-      logger.debug(`Task ${task.id} added`);
-      return task;
-    });
+  add(task: Omit<Task, 'id' | 'created'>): Task {
+    if (!this.isLoaded) {
+      throw new Error('Task storage not yet loaded');
+    }
+    
+    // Generate UUID
+    const id = crypto.randomUUID();
+    
+    // Create task object
+    const newTask: Task = {
+      id,
+      created: new Date().toISOString(),
+      ...task,
+      status: task.status || 'todo',
+      priority: task.priority || 'medium'
+    };
+    
+    // Add to map
+    this.tasks.set(id, newTask);
+    
+         // Save to storage
+     this.save();
+     
+     console.error(`[DEBUG] [taskStorage] Task ${id} added`);
+     
+     // Emit event
+     this.emit('task-added', newTask);
+    
+    return newTask;
   }
   
   /**
    * Get a task by ID
-   * 
    * @param id Task ID
-   * @returns Task if found, or undefined
+   * @returns Task or undefined if not found
    */
-  async getTask(id: string): Promise<Task | undefined> {
+  get(id: string): Task | undefined {
     return this.tasks.get(id);
   }
   
   /**
-   * Update an existing task
-   * 
-   * @param taskOrId Updated task or task ID
-   * @param changes Optional changes if ID is provided
-   * @returns Updated task
-   */
-  async updateTask(taskOrId: Task | string, changes?: Partial<Omit<Task, 'id'>>): Promise<Task> {
-    return await this.mutex.runExclusive(async () => {
-      const id = typeof taskOrId === 'string' ? taskOrId : taskOrId.id;
-      const task = this.tasks.get(id);
-      
-      if (!task) {
-        throw new Error(`Task with ID ${id} not found`);
-      }
-      
-      const updatedTask = {
-        ...task,
-        ...(typeof taskOrId === 'string' ? changes || {} : taskOrId)
-      };
-      
-      this.tasks.set(id, updatedTask);
-      
-      // Schedule save
-      this.scheduleSave();
-      
-      logger.debug(`Task ${id} updated`);
-      return updatedTask;
-    });
-  }
-  
-  /**
-   * Delete a task by ID
-   * 
-   * @param id Task ID to delete
-   * @returns True if task was deleted, false if not found
-   */
-  async deleteTask(id: string): Promise<boolean> {
-    return await this.mutex.runExclusive(async () => {
-      if (!this.tasks.has(id)) {
-        return false;
-      }
-      
-      const deleted = this.tasks.delete(id);
-      
-      // Schedule save
-      this.scheduleSave();
-      
-      logger.debug(`Task ${id} deleted`);
-      return deleted;
-    });
-  }
-  
-  /**
    * Get all tasks
-   * 
-   * @returns Array of all tasks
+   * @returns Array of tasks
    */
-  async getAllTasks(): Promise<Task[]> {
+  getAll(): Task[] {
     return Array.from(this.tasks.values());
   }
   
   /**
-   * Get tasks filtered by criteria
-   * 
-   * @param filter Filter criteria
-   * @returns Filtered tasks
+   * Update a task
+   * @param id Task ID
+   * @param update Task update
+   * @returns Updated task or undefined if not found
    */
-  async getTasksBy(filter: Partial<Task>): Promise<Task[]> {
-    const tasks = Array.from(this.tasks.values());
+  update(id: string, update: Partial<Omit<Task, 'id' | 'created'>>): Task | undefined {
+    const task = this.tasks.get(id);
     
-    return tasks.filter(task => {
-      return Object.entries(filter).every(([key, value]) => 
-        task[key as keyof Task] === value
-      );
-    });
-  }
-  
-  /**
-   * Save tasks immediately
-   */
-  async save(): Promise<void> {
-    return this.saveImmediately();
-  }
-  
-  /**
-   * List all tasks with optional filtering
-   * 
-   * @param status Optional status filter
-   * @param priority Optional priority filter
-   * @returns List of matching tasks
-   */
-  async listTasks(status?: TaskStatus, priority?: TaskPriority): Promise<Task[]> {
-    const tasks = Array.from(this.tasks.values());
-    
-    return tasks.filter(task => {
-      if (status && task.status !== status) return false;
-      if (priority && task.priority !== priority) return false;
-      return true;
-    });
-  }
-  
-  /**
-   * Get the next highest priority task
-   * 
-   * @returns Next task to work on
-   */
-  async getNextTask(): Promise<Task | undefined> {
-    const allTasks = Array.from(this.tasks.values());
-    const todoTasks = allTasks.filter(task => task.status === 'todo');
-    
-    if (todoTasks.length === 0) {
+    if (!task) {
       return undefined;
     }
     
-    // Sort by priority (high > medium > low)
-    const priorityOrder: Record<TaskPriority, number> = {
-      'high': 0,
-      'medium': 1,
-      'low': 2
+    const updatedTask = {
+      ...task,
+      ...update,
+      id
     };
     
-    todoTasks.sort((a, b) => {
-      const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-      
-      // If same priority, sort by creation date (oldest first)
-      if (priorityDiff === 0) {
-        return new Date(a.created).getTime() - new Date(b.created).getTime();
-      }
-      
-      return priorityDiff;
-    });
+    this.tasks.set(id, updatedTask);
+    this.save();
     
-    return todoTasks[0];
+    console.error(`[DEBUG] [taskStorage] Task ${id} updated`);
+    
+    // Emit event
+    this.emit('task-updated', updatedTask);
+    
+    return updatedTask;
   }
   
   /**
-   * Schedule a delayed save operation
+   * Delete a task
+   * @param id Task ID
+   * @returns True if deleted, false if not found
    */
-  private scheduleSave(): void {
-    if (this.saveTimer) {
-      clearTimeout(this.saveTimer);
+  delete(id: string): boolean {
+    const deleted = this.tasks.delete(id);
+    
+    if (deleted) {
+      this.save();
+      console.error(`[DEBUG] [taskStorage] Task ${id} deleted`);
+      
+      // Emit event
+      this.emit('task-deleted', id);
     }
     
-    this.saveTimer = setTimeout(() => {
-      this.saveImmediately();
-    }, this.saveInterval);
+    return deleted;
   }
   
   /**
-   * Save tasks to storage immediately
+   * Get tasks by status
+   * @param status Task status
+   * @returns Array of tasks with the given status
    */
-  async saveImmediately(): Promise<void> {
-    return await this.mutex.runExclusive(async () => {
-      try {
-        if (this.saveTimer) {
-          clearTimeout(this.saveTimer);
-          this.saveTimer = null;
-        }
-        
-        // Convert tasks to JSONL format
-        const lines = Array.from(this.tasks.values()).map(task => JSON.stringify(task));
-        
-        // Write to file
-        fs.writeFileSync(this.filePath, lines.join('\n') + '\n');
-        
-        logger.debug(`Saved ${this.tasks.size} tasks to ${this.filePath}`);
-      } catch (error) {
-        logger.error(`Failed to save tasks: ${error instanceof Error ? error.message : String(error)}`);
-        throw error;
-      }
-    });
+  getByStatus(status: TaskStatus): Task[] {
+    return this.getAll().filter(task => task.status === status);
   }
   
   /**
-   * Ensure storage directory exists
+   * Get highest priority task with the given status
+   * @param status Task status
+   * @returns Highest priority task or undefined if none
    */
-  private ensureDirectoryExists(): void {
-    const directory = path.dirname(this.filePath);
+  getHighestPriority(status: TaskStatus): Task | undefined {
+    const tasks = this.getByStatus(status);
     
-    if (!fs.existsSync(directory)) {
-      try {
+    // Define priority order
+    const priorityOrder = {
+      high: 3,
+      medium: 2,
+      low: 1
+    };
+    
+    // Sort by priority (high to low) and creation date (oldest first)
+    return tasks.sort((a, b) => {
+      const priorityDiff = priorityOrder[b.priority || 'medium'] - priorityOrder[a.priority || 'medium'];
+      if (priorityDiff !== 0) return priorityDiff;
+      
+      // If priority is the same, sort by creation date (oldest first)
+      return new Date(a.created).getTime() - new Date(b.created).getTime();
+    })[0];
+  }
+  
+  /**
+   * Get related tasks
+   * @param taskId Task ID
+   * @returns Array of tasks that depend on or are depended on by the given task
+   */
+  getRelatedTasks(taskId: string): Task[] {
+    const task = this.get(taskId);
+    if (!task) return [];
+    
+    // Get tasks that this task depends on
+    const dependencies = task.dependsOn || [];
+    const dependencyTasks = dependencies
+      .map(id => this.get(id))
+      .filter(Boolean) as Task[];
+    
+    // Get tasks that depend on this task
+    const dependents = this.getAll().filter(t => 
+      t.dependsOn && t.dependsOn.includes(taskId)
+    );
+    
+    // Combine and remove duplicates
+    const relatedTasks = [...dependencyTasks, ...dependents];
+    const uniqueIds = new Set(relatedTasks.map(t => t.id));
+    
+    return Array.from(uniqueIds).map(id => this.get(id) as Task);
+  }
+  
+  /**
+   * Set a task to automatically transition to the next status after a delay
+   * @param taskId Task ID
+   * @param delay Delay in milliseconds
+   * @param targetStatus Target status
+   */
+  setAutoTransition(taskId: string, delay: number, targetStatus: TaskStatus): void {
+    // Clear existing timeout
+    this.clearTimeout(taskId);
+    
+    // Set new timeout
+    const timeout = setTimeout(() => {
+      this.update(taskId, { status: targetStatus });
+      this.timeouts.delete(taskId);
+    }, delay);
+    
+    this.timeouts.set(taskId, timeout);
+  }
+  
+  /**
+   * Clear a task auto-transition timeout
+   * @param taskId Task ID
+   */
+  clearTimeout(taskId: string): void {
+    const timeout = this.timeouts.get(taskId);
+    if (timeout) {
+      clearTimeout(timeout);
+      this.timeouts.delete(taskId);
+    }
+  }
+  
+  /**
+   * Clear all task auto-transition timeouts
+   */
+  clearAllTimeouts(): void {
+    for (const [taskId, timeout] of this.timeouts.entries()) {
+      clearTimeout(timeout);
+      this.timeouts.delete(taskId);
+    }
+  }
+  
+  /**
+   * Save tasks to storage
+   */
+  save(): void {
+    // Throttle saving to prevent excessive disk I/O
+    if (this._saveTimeout) {
+      clearTimeout(this._saveTimeout);
+    }
+    
+    this._saveTimeout = setTimeout(() => {
+      this.saveImmediately();
+    }, 1000);
+  }
+  
+  /**
+   * Save tasks immediately without throttling
+   */
+  saveImmediately(): void {
+    try {
+      // Ensure directory exists
+      const directory = path.dirname(this.filePath);
+      this.createDirectory(directory);
+      
+      // Write tasks to file
+      const lines = Array.from(this.tasks.values()).map(task => JSON.stringify(task));
+      fs.writeFileSync(this.filePath, lines.join('\n'), 'utf8');
+      
+      console.error(`[DEBUG] [taskStorage] Saved ${this.tasks.size} tasks to ${this.filePath}`);
+    } catch (error) {
+      console.error(`[ERROR] [taskStorage] Failed to save tasks: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  
+  /**
+   * Create directory if it doesn't exist
+   * @param directory Directory path
+   */
+  private createDirectory(directory: string): void {
+    try {
+      if (!fs.existsSync(directory)) {
         fs.mkdirSync(directory, { recursive: true });
-        logger.info(`Created directory ${directory}`);
-      } catch (error) {
-        logger.error(`Failed to create directory ${directory}: ${error instanceof Error ? error.message : String(error)}`);
-        throw error;
+        console.error(`[INFO] [taskStorage] Created directory ${directory}`);
       }
+    } catch (error) {
+      console.error(`[ERROR] [taskStorage] Failed to create directory ${directory}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   
   /**
    * Load tasks from storage
    */
-  private loadTasks(): void {
+  private load(): void {
     try {
+      // Check if file exists
       if (!fs.existsSync(this.filePath)) {
-        logger.info(`Task file ${this.filePath} doesn't exist yet, creating empty storage`);
+        console.error(`[INFO] [taskStorage] Task file ${this.filePath} doesn't exist yet, creating empty storage`);
+        this.createDirectory(path.dirname(this.filePath));
+        fs.writeFileSync(this.filePath, '', 'utf8');
+        this.isLoaded = true;
         return;
       }
       
-      const content = fs.readFileSync(this.filePath, 'utf-8');
-      const lines = content.split('\n').filter(line => line.trim().length > 0);
+      // Read and parse tasks
+      const content = fs.readFileSync(this.filePath, 'utf8');
+      const lines = content.split('\n').filter(line => line.trim());
       
       for (const line of lines) {
         try {
           const task = JSON.parse(line) as Task;
           this.tasks.set(task.id, task);
-        } catch (error) {
-          logger.warn(`Failed to parse task: ${line}, error: ${error instanceof Error ? error.message : String(error)}`);
+        } catch (err) {
+          console.error(`[WARN] [taskStorage] Failed to parse task: ${line}, error: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
       
-      logger.info(`Loaded ${this.tasks.size} tasks from ${this.filePath}`);
+      console.error(`[INFO] [taskStorage] Loaded ${this.tasks.size} tasks from ${this.filePath}`);
+      this.isLoaded = true;
     } catch (error) {
-      logger.error(`Failed to load tasks: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`[ERROR] [taskStorage] Failed to load tasks: ${error instanceof Error ? error.message : String(error)}`);
+      this.isLoaded = true; // Set to true to allow adding new tasks
     }
   }
   
   /**
-   * Clear all active timeouts
+   * Save timeout
    */
-  clearAllTimeouts(): void {
-    if (this.saveTimer) {
-      clearTimeout(this.saveTimer);
-      this.saveTimer = null;
-    }
-  }
+  private _saveTimeout: NodeJS.Timeout | null = null;
 }
 
-/**
- * Singleton task storage instance
- */
+// Export a singleton instance
 export const taskStorage = new TaskStorage();
-
-// Ensure all tasks are saved on process exit to prevent data loss
-process.once('beforeExit', () => {
-  safeErrorLog('Process beforeExit - saving tasks');
-  taskStorage.saveImmediately();
-});
-
-// Also handle exit to ensure proper cleanup
-process.once('exit', () => {
-  safeErrorLog('Process exit - final cleanup');
-  if (taskStorage) {
-    taskStorage.clearAllTimeouts();
-  }
-});

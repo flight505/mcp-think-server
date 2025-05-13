@@ -4,10 +4,7 @@ import { homedir } from 'os';
 import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { createDirectory } from './utils/fs.js';
-import { createLogger } from './utils/logger.js';
 
-// Create logger
-const logger = createLogger('config');
 
 /**
  * Server configuration
@@ -109,7 +106,7 @@ function getVersionFromPackage(): string {
       return packageJson.version || '0.0.0';
     }
   } catch (error) {
-    logger.warn(`Could not read version from package.json, using fallback version 0.0.0`);
+    console.error(`[WARN] [config] Could not read version from package.json, using fallback version 0.0.0`);
   }
   
   return '0.0.0';

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ExtendedThinkSchema } from '../../src/agents/BasicAgent.js';
 import { FastMCP } from 'fastmcp';
+import { registerThinkTools } from '../../src/think/tools.js';
 
 // Mock the FastMCP dependency
 vi.mock('fastmcp', () => {
@@ -26,7 +27,7 @@ vi.mock('../../src/memory/storage.js', () => {
 });
 
 // Import the function after mocking dependencies
-import { registerThinkTool } from '../../src/think/tools.js';
+
 
 describe('Think Tool Step Counter', () => {
   let server: FastMCP;
@@ -43,7 +44,7 @@ describe('Think Tool Step Counter', () => {
     });
     
     // Register the think tool
-    registerThinkTool(server);
+    registerThinkTools(server);
     
     // Capture the tool configuration
     toolConfig = (server.addTool as any).mock.calls[0][0];

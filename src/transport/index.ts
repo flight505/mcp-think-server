@@ -2,10 +2,6 @@ import { FastMCP } from 'fastmcp';
 import { resetInactivityTimer } from '../core/index.js';
 import { startConnectionCheck } from '../core/connection.js';
 import { setupStdioTransport, setupHttpTransport } from './handlers.js';
-import { createLogger } from '../utils/logger.js';
-
-// Create logger
-const logger = createLogger('transport');
 
 /**
  * Start the server with the appropriate transport
@@ -28,7 +24,7 @@ export async function startServer(server: FastMCP, isToolScanMode: boolean): Pro
     } else {
       // Default to HTTP/streamable-HTTP transport for any other transport type
       if (transportType !== "streamable-http" && transportType !== "http") {
-        logger.warn(`Unsupported transport type: ${transportType}. Defaulting to streamable-HTTP transport.`);
+        console.error(`[WARN] [transport] Unsupported transport type: ${transportType}. Defaulting to streamable-HTTP transport.`);
       }
       
       setupHttpTransport(server, isToolScanMode, _TOOL_SCAN_TIMEOUT);
@@ -40,11 +36,10 @@ export async function startServer(server: FastMCP, isToolScanMode: boolean): Pro
     // Reset inactivity timer
     resetInactivityTimer();
     
-    logger.info(`Server successfully started with ${transportType} transport`);
+    console.error(`[INFO] [transport] Server successfully started with ${transportType} transport`);
     
   } catch (error) {
-    logger.error(`Error starting server: ${error instanceof Error ? error.message : String(error)}`,
-      error instanceof Error ? error : undefined);
+    console.error(`[ERROR] [transport] Error starting server: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   }
 } 

@@ -9,7 +9,7 @@ import { serverState, resetInactivityTimer, gracefulShutdown } from './index.js'
  */
 export function startConnectionCheck(isToolScanMode: boolean): void {
   // Remove all connection checking logic since it's causing timeouts
-  console.error('Connection checking disabled to prevent timeout issues');
+  console.error('[INFO] [connection] Connection checking disabled to prevent timeout issues');
   
   // Just ensure the server is considered active
   resetInactivityTimer();
@@ -22,7 +22,7 @@ export function startConnectionCheck(isToolScanMode: boolean): void {
  * @returns The HTTP server with connection tracking
  */
 export function setupConnectionTracking(httpServer: http.Server): http.Server {
-  console.error('Setting up HTTP connection tracking');
+  console.error('[INFO] [connection] Setting up HTTP connection tracking');
   
   // Track when a new connection is established
   httpServer.on('connection', (socket) => {

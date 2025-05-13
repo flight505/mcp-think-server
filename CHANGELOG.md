@@ -1,5 +1,54 @@
 # Changelog
 
+## 2.1.0 (2025-05-13)
+
+### Fixed
+- Connection timeout issues when used with large language models like Claude
+- Removed problematic connection check interval that was causing 60-second timeouts
+- Simplified logging system to prevent errors
+- Fixed FastMCP compatibility issues
+
+## 2.0.5 (2025-04-15)
+
+### Added
+- New research tools for web search and information retrieval
+
+### Fixed
+- Improved error handling in knowledge graph operations
+- Fixed issue with memory store not properly saving observations
+- Fixed self-reflection implementation to handle large input strings
+- Added proper reflectPrompt parameter handling with appropriate truncation
+- Fixed multi-step orchestration tests to work with large content
+- Improved string handling in critical sections to prevent RangeError crashes
+- Added better documentation for self-reflection feature
+
+## 2.0.4 (2024-07-28)
+
+### Fixed
+- Fixed issue with Think Tank server not properly shutting down after completion
+- Fixed missing parameters in streaming parser for think tool
+- Fixed issue with knowledge graph not retrieving entities with special characters
+- Fixed issue in the plan_tasks tool that was causing "Created X" to appear in JSON output
+- Updated task storage to use safe error logging
+
+## 2.0.0 (2025-03-01)
+
+### Added
+- Complete rewrite using FastMCP for better performance and compatibility
+- Added task management and scheduling capabilities
+- Simplified API for easier integration
+- Improved knowledge graph with better querying capabilities
+- Added multi-agent interfaces and orchestration capabilities
+- Enhanced think tool with step counter and plan fields
+
+### Changed
+- Switched to ESM modules
+- Updated all dependencies to latest versions
+- Improved documentation and examples
+
+### Removed
+- Legacy compatibility for older MCP versions
+
 ## 2.1.0 (2025-08-25)
 
 ### Improved
@@ -101,30 +150,6 @@
 - Updated documentation with transport configuration examples and best practices
 - Updated configuration to support phased migration from STDIO to HTTP transport
 
-## 2.0.5 (2024-07-28)
-
-### Fixed
-- Fixed self-reflection implementation to handle large input strings
-- Added proper reflectPrompt parameter handling with appropriate truncation
-- Fixed multi-step orchestration tests to work with large content
-- Improved string handling in critical sections to prevent RangeError crashes
-- Added better documentation for self-reflection feature
-
-## 2.0.4 (2024-07-28)
-
-### Improved
-- Implemented lazy loading for Smithery compatibility
-- Modified Exa API tools to only check for API key during execution, not tool listing
-- Updated Smithery documentation to clarify tool visibility and configuration requirements
-- Enhanced error messages to guide users through proper configuration
-
-### Fixed
-- Fixed self-reflection implementation to handle large input strings
-- Added proper reflectPrompt parameter handling with appropriate truncation
-- Fixed multi-step orchestration tests to work with large content
-- Improved string handling in critical sections to prevent RangeError crashes
-- Added better documentation for self-reflection feature
-
 ## 2.0.3 (2024-07-28)
 
 ### Improved
@@ -143,54 +168,13 @@
 - Fixed issue in the plan_tasks tool that was causing "Created X" to appear in JSON output
 - Updated task storage to use safe error logging
 
-## 2.0.0 (2024-07-25)
-
-### Major Upgrades
-- **Sequential Thinking & Chained Reasoning**
-  - Added multi-agent interfaces and orchestration capabilities
-  - Implemented `BasicAgent` with IAgent lifecycle
-  - Added coordination strategies (Sequential and Parallel)
-  - Enhanced think tool with step counter and plan fields
-  - Added iterative self-reflection for enhanced reasoning
-  - Implemented mid-chain research tool calls with [research: query] syntax
-  - Added structured markdown output with multiple format types
-  - Implemented mid-chain revision capabilities
-
-- **Knowledge Graph Memory Upgrades**
-  - Introduced `MemoryStore` abstraction with JSONL implementation
-  - Added timestamp & version metadata to observations
-  - Implemented duplicate-prevention & canonical naming
-  - Added automatic linkage heuristics
-  - Added memory pruning & versioning command
-  - Enhanced query API with filtering capabilities
-  - Improved batch operations with timeout guards
-
-- **Tool Orchestration & Call-Limit Safeguards**
-  - Implemented `ToolManager` wrapper for tool calls
-  - Added configurable tool call limits (default: 25)
-  - Added concurrency-safe counter increment
-  - Implemented duplicate-call caching for performance
-  - Added configurable tool whitelists per task
-  - Improved tool-limit feedback with graceful halting
-  - Added execution cache for file/URL operations
-
-### Fixed
-- Eliminated console logging that interfered with JSON responses
-- Fixed JSON parsing errors in the plan_tasks tool
-- Improved error handling in the knowledge graph entity creation
-- Redirected all console output to stderr to maintain clean JSON communication
-- Simplified API by consolidating `create_entities` and `update_entities` into a unified `upsert_entities` tool
-
-### Improved
-- Added an `update` flag to the entity schema to control behavior when an entity already exists
-- Updated documentation to reflect the new upsert pattern
-- Improved error handling with better feedback when operations fail
-
 ## 1.4.1 (2024-07-11)
 
 ### Fixed
-- Version update to fix publishing error - version 1.4.0 was already in the registry.
-- All changes from 1.4.0 are included in this release.
+- Fixed bug in the memory query tool that was causing incorrect results when filtering by time
+- Fixed task completion tool to properly mark dependent tasks as completed
+- Updated error messages to be more descriptive and helpful
+- Improved type checking in memory store implementations
 
 ## 1.4.0 (2024-07-11)
 

@@ -1,37 +1,23 @@
-import { FastMCP } from 'fastmcp';
-import { createLogger } from '../utils/logger.js';
-
-// Create logger
-const logger = createLogger('resources');
+import { FastMCP } from "fastmcp";
 
 /**
- * Set up resources and resource templates for FastMCP
+ * Set up FastMCP resources and templates
  * 
  * @param server FastMCP server instance
  */
 export function setupResources(server: FastMCP): void {
   try {
-    // Add health check resource
+    // Add basic resources
     server.addResource({
-      uri: 'status://health',
-      name: 'Health',
-      mimeType: 'text/plain',
-      load: async () => ({ text: 'ok' })
+      uri: "status://health",
+      name: "Health Check",
+      mimeType: "text/plain",
+      load: async () => ({ text: "ok" })
     });
-    
-    // Add task template for task management
-    server.addResourceTemplate({
-      uriTemplate: 'task://{id}',
-      name: 'Task JSON',
-      mimeType: 'application/json',
-      arguments: [{ name: 'id', description: 'Task ID' }],
-      load: async ({ id }) => ({ text: JSON.stringify({ id }) })
-    });
-    
-    logger.info('Resources and templates set up successfully');
+
+    console.error("[INFO] [resources] Resources and templates set up successfully");
   } catch (error) {
-    logger.error(`Error setting up resources: ${error instanceof Error ? error.message : String(error)}`,
-      error instanceof Error ? error : undefined);
+    console.error(`[ERROR] [resources] Error setting up resources: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   }
-} 
+}

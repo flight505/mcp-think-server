@@ -4,11 +4,7 @@ import './utils/console.js';
 
 import { initializeServer, resetInactivityTimer } from './core/index.js';
 import { startServer } from './transport/index.js';
-import { createLogger } from './utils/logger.js';
 import { createCleanupScript } from './utils/process.js';
-
-// Create logger
-const logger = createLogger('server');
 
 // Detect if tool scanning is in progress
 const isToolScanMode = process.env.SMITHERY_TOOL_SCAN === 'true' || 
@@ -18,7 +14,7 @@ const isToolScanMode = process.env.SMITHERY_TOOL_SCAN === 'true' ||
 // Main server startup function
 async function main() {
   try {
-    logger.info('Starting MCP Think Tank server...');
+    console.error('[INFO] [server] Starting MCP Think Tank server...');
     
     // Initialize server
     const server = await initializeServer();
@@ -33,15 +29,18 @@ async function main() {
     createCleanupScript();
     
   } catch (error) {
-    logger.error(`Server startup failed: ${error instanceof Error ? error.message : String(error)}`,
-      error instanceof Error ? error : undefined);
+    console.error(`[ERROR] [server] Server startup failed: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 }
 
+// Handle uncaught errors
+process.on('uncaughtException', (error) => {
+  console.error(`[ERROR] [server] Uncaught error in main: ${error instanceof Error ? error.message : String(error)}`);
+});
+
 // Start the server
-main().catch(error => {
-  logger.error(`Uncaught error in main: ${error instanceof Error ? error.message : String(error)}`,
-    error instanceof Error ? error : undefined);
+main().catch((error) => {
+  console.error(`[ERROR] [server] Failed to start server: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 });
