@@ -61,10 +61,16 @@ Leveraging the `think` tool provides a dedicated space for systematic reasoning,
 build:
   dockerfile: Dockerfile
 
-# Runtime configuration for Smithery compatibility
+# Runtime configuration for Smithery compatibility with 2025 standards
 runtime:
-  maxToolScanTimeoutMs: 30000  # Increased timeout for tool scanning
-  lazyLoading: true            # Enable lazy loading of tools and configurations
+  maxToolScanTimeoutMs: 60000      # Increased timeout for tool scanning (60 seconds)
+  lazyLoading: true                # Enable lazy loading of tools and configurations
+  toolScanModeEnabled: true        # Enable dedicated tool scanning mode
+  asynchronousScanning: true       # Use asynchronous scanning for better performance
+  smartToolRegistration: true      # Enable intelligent tool registration
+  statelessMode: false             # Keep stateful connections for better reliability
+  scanRetryCount: 3                # Number of retries if tool scanning fails
+  scanConcurrency: 10              # Maximum number of concurrent tool scans
 
 startCommand:
   # Support both transport methods per 2025 Smithery standards
@@ -125,7 +131,13 @@ startCommand:
         MCP_PORT: config.MCP_PORT || '8000',
         MCP_PATH: config.MCP_PATH || '/mcp',
         AUTO_SHUTDOWN_MS: config.AUTO_SHUTDOWN_MS || '1800000',
-        MCP_DEBUG: config.MCP_DEBUG || 'false'
+        MCP_DEBUG: config.MCP_DEBUG || 'false',
+        // Enhanced tool scanning environment variables
+        TOOL_SCAN_TIMEOUT: '60000',
+        SCAN_RETRY_COUNT: '3',
+        SCAN_CONCURRENCY: '10',
+        ASYNC_SCANNING: 'true',
+        STATELESS_MODE: 'false'
       }
     })
 

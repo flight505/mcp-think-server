@@ -5,21 +5,34 @@ import { ServerOptions } from "http";
 import { config } from "../config.js";
 
 /**
+ * Enhanced scanning options for Smithery 2025 compatibility
+ */
+export interface ScanOptions {
+  scanRetryCount?: number;
+  scanConcurrency?: number;
+  asyncScanning?: boolean;
+  statelessMode?: boolean;
+}
+
+/**
  * Creates HTTP/SSE server configuration for FastMCP
  * 
  * @param port Server port
  * @param host Host to bind to
  * @param endpointPath API endpoint path
  * @param serverOptions HTTP server options
+ * @param scanOptions Enhanced scan options
  * @returns FastMCP server configuration object
  */
 export function createHttpServerConfig(
   port: number,
   host: string,
   endpointPath: string,
-  serverOptions: ServerOptions
+  serverOptions: ServerOptions,
+  scanOptions?: ScanOptions
 ): any {
-  return {
+  // Basic configuration
+  const config: any = {
     transportType: "sse", // FastMCP TypeScript type expects "sse" but we use it for streamable-http
     sse: {
       port,
@@ -32,6 +45,18 @@ export function createHttpServerConfig(
       }
     }
   };
+
+  // Add enhanced scan options if provided
+  if (scanOptions) {
+    config.scanOptions = {
+      retryCount: scanOptions.scanRetryCount,
+      concurrency: scanOptions.scanConcurrency,
+      async: scanOptions.asyncScanning,
+      stateless: scanOptions.statelessMode
+    };
+  }
+
+  return config;
 }
 
 /**
@@ -51,12 +76,14 @@ export function setupStdioTransport(server: FastMCP): void {
  * @param server FastMCP server instance
  * @param isToolScanMode Whether the server is running in tool scan mode
  * @param toolScanTimeout Timeout for tool scanning in milliseconds
+ * @param scanOptions Enhanced scan options
  * @param options Configuration options
  */
 export function setupHttpTransport(
   server: FastMCP,
   isToolScanMode: boolean,
   toolScanTimeout: number,
+  scanOptions?: ScanOptions,
   options: {
     host?: string,
     port?: number,
@@ -77,8 +104,13 @@ export function setupHttpTransport(
   const serverOptions = getServerOptions(isToolScanMode, toolScanTimeout);
   
   // Create and use the server configuration
-  const serverConfig = createHttpServerConfig(port, host, endpointPath, serverOptions);
+  const serverConfig = createHttpServerConfig(port, host, endpointPath, serverOptions, scanOptions);
   server.start(serverConfig);
   
-  console.error(`[INFO] [transportHandlers] MCP Think Tank server v${config.version} started successfully with streamable-HTTP transport at ${host}:${port}${endpointPath}`);
+  let transportType = "streamable-HTTP";
+  if (scanOptions?.statelessMode) {
+    transportType += " (stateless mode)";
+  }
+  
+  console.error(`[INFO] [transportHandlers] MCP Think Tank server v${config.version} started successfully with ${transportType} transport at ${host}:${port}${endpointPath}`);
 }

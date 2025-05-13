@@ -5,16 +5,29 @@ import './utils/console.js';
 import { initializeServer, resetInactivityTimer } from './core/index.js';
 import { startServer } from './transport/index.js';
 import { createCleanupScript } from './utils/process.js';
+import { config } from './config.js';
 
-// Detect if tool scanning is in progress
-const isToolScanMode = process.env.SMITHERY_TOOL_SCAN === 'true' || 
-                        process.argv.includes('--tool-scan') ||
-                        process.argv.includes('--scan-tools');
+// Enhanced detection of Smithery tool scanning mode
+const isToolScanMode = 
+  process.env.SMITHERY_TOOL_SCAN === 'true' || 
+  process.env.MCP_TOOL_SCAN_MODE === 'true' ||
+  process.env.SCAN_TOOLS === 'true' ||
+  process.argv.includes('--tool-scan') ||
+  process.argv.includes('--scan-tools');
+
+// Extract Smithery MCP version for compatibility reporting
+const smitheryVersion = process.env.SMITHERY_VERSION || '2025';
 
 // Main server startup function
 async function main() {
   try {
-    console.error('[INFO] [server] Starting MCP Think Tank server...');
+    console.error(`[INFO] [server] Starting MCP Think Tank server v${config.version}...`);
+    
+    // Log enhanced Smithery compatibility information
+    if (isToolScanMode) {
+      console.error(`[INFO] [server] Running in Smithery tool scan mode (compatibility: ${smitheryVersion})`);
+      console.error('[INFO] [server] Enhanced tool scanning enabled with asynchronous support');
+    }
     
     // Initialize server
     const server = await initializeServer();
