@@ -11,44 +11,45 @@ echo "Building MCP Think Tank v${VERSION}..."
 mkdir -p dist/src/core
 mkdir -p dist/src/transport
 mkdir -p dist/src/utils
+mkdir -p dist/src/memory
+mkdir -p bin
 
-# Check if we should skip TypeScript compilation (for fast testing)
-if [ "$1" != "--skip-tsc" ]; then
-  # Run TypeScript compiler
-  echo "Running TypeScript compiler..."
-  npx tsc
-else
-  echo "Skipping TypeScript compilation..."
-fi
+# Run TypeScript compiler
+echo "Running TypeScript compiler..."
+npx tsc
 
-# Copy the minimal server implementation for Smithery
-if [ "$1" == "--smithery-minimal" ] || [ "$2" == "--smithery-minimal" ]; then
-  echo "Copying minimal Smithery-compatible implementation..."
-  
-  # Copy required files
-  cp -f dist/src/server.js dist/src/server.js.bak || true
-  cat > dist/src/server.js << EOF
-// Redirect console output to stderr for MCP protocol compliance
+# Ensure server script exists
+if [ ! -f "dist/src/server.js" ]; then
+    echo "Warning: Server not compiled correctly, creating minimal server implementation..."
+    
+    # Create minimal server implementation for Smithery compatibility
+    cat > dist/src/server.js << EOF
+// Minimal server implementation for Smithery compatibility
+import { FastMCP } from 'fastmcp';
+
+// Make console.log use stderr to avoid interfering with MCP protocol
 console.log = (...args) => console.error(...args);
 
-// Simple server for Smithery compatibility
 async function main() {
   try {
     // Log startup
-    console.error("[INFO] Starting MCP Think Tank server (Smithery-compatible version)...");
+    console.error("[INFO] Starting MCP Think Tank server...");
     
-    // Import the FastMCP package
-    const { FastMCP } = await import('fastmcp');
-    
-    // Create server instance
+    // Create server instance with minimal configuration
     const server = new FastMCP({
       name: "MCP Think Tank",
-      version: "2.0.7" // Hardcoded for reliability
+      version: "${VERSION}"
     });
     
-    // For Smithery compatibility test without connecting to anything
-    // Just verify we can create a server and exit successfully
-    console.error("[INFO] Server successfully verified - exiting for Smithery compatibility");
+    // Set up transport based on environment variables
+    const transport = process.env.MCP_TRANSPORT || 'http';
+    const host = process.env.MCP_HOST || '0.0.0.0';
+    const port = parseInt(process.env.MCP_PORT || '8000', 10);
+    const path = process.env.MCP_PATH || '/mcp';
+    
+    // Start the server
+    await server.listen({ transport, host, port, path });
+    console.error(\`[INFO] Server listening on \${host}:\${port}\${path} using \${transport} transport\`);
     
     // Handle graceful shutdown
     process.on('SIGINT', () => {
@@ -66,57 +67,62 @@ async function main() {
   }
 }
 
+// Handle version flag for compatibility testing
+if (process.argv.includes('--version')) {
+  console.error(\`MCP Think Tank v\${VERSION}\`);
+  process.exit(0);
+}
+
 // Start the server
 main().catch(error => {
   console.error(\`[FATAL] Unhandled error during server startup: \${error}\`);
   process.exit(1);
 });
 EOF
+fi
 
-  # Create a minimal utils/console.js file
-  mkdir -p dist/src/utils
-  cat > dist/src/utils/console.js << EOF
-// Redirect console.log to console.error
-console.log = (...args) => console.error(...args);
-
-// Define a safe error log helper
+# Create minimal utils/console.js file if needed
+if [ ! -f "dist/src/utils/console.js" ]; then
+    echo "Creating minimal console utilities..."
+    mkdir -p dist/src/utils
+    cat > dist/src/utils/console.js << EOF
+// Minimal console utilities for Smithery compatibility
 export const safeErrorLog = (message) => {
   try {
     console.error(message);
   } catch (e) {
-    // Failsafe if console.error itself fails
     process.stderr.write(\`\${message}\n\`);
   }
 };
 EOF
-
-  echo "Skipping server verification for Smithery minimal build..."
-  exit 0
 fi
 
-# Check if core modules were compiled
-if [ ! -f "dist/src/core/index.js" ]; then
-    echo "Warning: Core modules not compiled correctly!"
-    echo "Using minimal implementation..."
-    
-    # Create minimal server implementation
-    mkdir -p dist/src/core
-    echo "export function initializeServer() { return {}; }" > dist/src/core/index.js
-fi
+# Create bin scripts if they don't exist
+if [ ! -f "bin/mcp-think-tank.js" ]; then
+    echo "Creating bin scripts..."
+    cat > bin/mcp-think-tank.js << EOF
+#!/usr/bin/env node
 
-if [ ! -f "dist/src/transport/index.js" ]; then
-    echo "Warning: Transport module not compiled correctly!"
-    echo "Using minimal implementation..."
-    
-    # Create minimal transport implementation
-    mkdir -p dist/src/transport
-    echo "export function startServer() { return; }" > dist/src/transport/index.js
-fi
+// Simple bin script to start the server
+import '../dist/src/server.js';
+EOF
 
-# Verify the server script exists
-if [ ! -f "dist/src/server.js" ]; then
-    echo "Error: Server not compiled correctly!"
-    exit 1
+    cat > bin/mcp-think-tank-cjs.cjs << EOF
+#!/usr/bin/env node
+
+// CommonJS wrapper for ESM module
+try {
+  require('../dist/src/server.js');
+} catch (e) {
+  if (e.code === 'ERR_REQUIRE_ESM') {
+    // This is an ESM module, use dynamic import
+    import('../dist/src/server.js');
+  } else {
+    console.error(e);
+    process.exit(1);
+  }
+}
+EOF
 fi
 
 # Make scripts executable

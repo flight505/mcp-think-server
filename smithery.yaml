@@ -20,14 +20,9 @@ keywords:
 build:
   dockerfile: Dockerfile
 
-# Runtime configuration for Smithery compatibility
-runtime:
-  maxToolScanTimeoutMs: 60000
-  lazyLoading: true
-
-# Server configuration
+# Server configuration for Smithery compatibility
 startCommand:
-  type: streamable-http
+  type: http
   httpRoute: "/mcp"
   configSchema:
     type: object
@@ -39,7 +34,6 @@ startCommand:
         type: string
         description: "API key for Exa web search functionality"
     required: []
-  # The server will start from our distribution's server.js file
   commandFunction: |-
     config => ({
       command: 'node',
@@ -47,7 +41,7 @@ startCommand:
       env: {
         ...config,
         NODE_ENV: 'production',
-        MCP_TRANSPORT: 'streamable-http',
+        MCP_TRANSPORT: 'http',
         MCP_PATH: '/mcp',
         MEMORY_PATH: config.memoryPath || '/data/memory.jsonl'
       }
@@ -110,4 +104,4 @@ readme: |
   - `exa_search`: Search the web
   - `exa_answer`: Get factual answers with sources
   
-  For more information, visit the [GitHub repository](https://github.com/flight505/mcp-think-tank). 
+  For more information, visit the [GitHub repository](https://github.com/flight505/mcp-think-tank).
