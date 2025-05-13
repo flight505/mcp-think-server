@@ -28,6 +28,7 @@ runtime:
 # Server configuration
 startCommand:
   type: streamable-http
+  httpRoute: "/mcp"
   configSchema:
     type: object
     properties:
@@ -37,51 +38,53 @@ startCommand:
       exaApiKey:
         type: string
         description: "API key for Exa web search functionality"
-      toolLimit:
-        type: number
-        description: "Maximum number of tool calls allowed per session (default: 25)"
-      autoLink:
-        type: boolean
-        description: "Enable automatic entity linking in knowledge graph (default: true)"
     required: []
-    description: "Configuration options for MCP Think Tank server"
-  commandFunction: |
+  # The server will start from our distribution's server.js file
+  commandFunction: |-
     config => ({
       command: 'node',
       args: ['dist/src/server.js'],
       env: {
-        MEMORY_PATH: config.memoryPath || '/data/memory.jsonl',
-        EXA_API_KEY: config.exaApiKey,
-        TOOL_LIMIT: config.toolLimit?.toString(),
-        AUTO_LINK: config.autoLink?.toString(),
+        ...config,
+        NODE_ENV: 'production',
         MCP_TRANSPORT: 'streamable-http',
-        MCP_HOST: '0.0.0.0',
-        MCP_PORT: '8000',
         MCP_PATH: '/mcp',
-        ASYNC_SCANNING: 'true',
-        TOOL_SCAN_TIMEOUT: '60000',
-        SCAN_RETRY_COUNT: '3',
-        SCAN_CONCURRENCY: '10'
+        MEMORY_PATH: config.memoryPath || '/data/memory.jsonl'
       }
     })
 
 # Documentation for users
 readme: |
-  ## MCP Think Tank
-  
-  A powerful MCP server that provides reasoning and knowledge graph capabilities for AI assistants. Key features include:
-  
-  - 💭 **Think Tool**: Dedicated space for structured reasoning and self-reflection.
-  - 🧩 **Knowledge Graph**: Simple and effective persistent memory system.
-  - 📝 **Task Management**: Plan, track, and update tasks integrated with the knowledge graph.
-  - 🌐 **Web Research**: Search the web and get sourced answers using Exa API.
-  
-  ### Configuration
-  
-  - **memoryPath**: Path to memory.jsonl file (required, defaults to /data/memory.jsonl in the container)
-  - **exaApiKey**: API key for Exa web search (required for search tools)
-  - **toolLimit**: Maximum tool calls per session (default: 25)
-  - **autoLink**: Enable automatic entity linking (default: true)
+  ## Overview
+
+  MCP Think Tank is a powerful Model Context Protocol (MCP) server designed to enhance the capabilities of AI assistants like **Cursor** and **Claude @Web**. It provides a structured environment for reasoning, knowledge management, and conducting web research.
+
+  ### Key Features:
+
+  * **Structured Thinking**: Provides space for step-by-step reasoning with self-reflection capabilities
+  * **Knowledge Graph**: Maintains a persistent graph for entities and relationships
+  * **Task Management**: Create, track and manage tasks with priorities and dependencies
+  * **Web Research**: Built-in Exa search and answer capabilities
+  * **Memory Management**: Persistent storage of information between sessions
+
+  ## Usage
+
+  This MCP server works with AI assistants that support the Model Context Protocol, allowing for enhanced reasoning and knowledge management.
+
+  To use with Cursor, simply install:
+
+  ```bash
+  npm install -g @flight505/mcp-think-tank@2.0.7
+  ```
+
+  The server will automatically connect to your AI assistant when needed.
+
+  ## Configuration
+
+  You can configure the memory location and provide API keys for enhanced functionality:
+
+  * **memoryPath**: Path to the memory.jsonl file for persistent knowledge storage
+  * **exaApiKey**: API key for web search capabilities
   
   ### Available Tools
   
