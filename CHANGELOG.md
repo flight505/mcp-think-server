@@ -153,23 +153,15 @@
 - Enhanced server configuration with type compatibility for latest FastMCP
 - Updated transport configuration to support latest FastMCP conventions
 
-## 2.0.7 (2024-07-31)
-
-### Added
-- Updated default transport to "streamable-http" to align with MCP industry standards
-- Improved host and port configuration for HTTP transport
-- Enhanced error handling for the unsupported transport types
-
-### Improved
-- Better warning message for deprecated STDIO transport
-- More detailed logging of server startup with transport information
-- Improved fallback mechanism for transport configuration
-- Enhanced server process management and cleanup
+## 2.0.7 (2025-05-13)
 
 ### Fixed
-- Fixed transport connection issues with some MCP clients
-- Corrected FastMCP type definitions for streamable-http configuration
-- Ensured consistent host and port usage across all transport modes
+- Fixed fs mocking in tests to support ESM imports properly
+- Enhanced Smithery tool scanning compatibility with 2025 standards
+- Implemented asynchronous scanning for better performance
+- Added compatibility headers for improved Smithery interaction
+- Increased tool scan timeout to 60 seconds for more reliable tool discovery
+- Added retry mechanisms for tool scanning to improve reliability
 
 ## 2.0.6 (2024-07-30)
 
