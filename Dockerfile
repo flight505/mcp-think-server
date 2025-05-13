@@ -2,35 +2,35 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install production dependencies only
+RUN npm ci --only=production
 
-# Copy application code
-COPY . .
+# Copy source code and build script
+COPY src/ ./src/
+COPY scripts/ ./scripts/
+COPY tsconfig.json ./
+COPY bin/ ./bin/
+
+# Install development dependencies for build
+RUN npm install
 
 # Build the application
 RUN npm run build
 
-# Verify server script exists
-RUN test -f dist/src/server.js || (echo "Error: dist/src/server.js not found" && exit 1)
+# Create data directory
+RUN mkdir -p /data
 
-# Make sure the server is executable
+# Make key files executable
 RUN chmod +x dist/src/server.js bin/mcp-think-tank.js bin/mcp-think-tank-cjs.cjs
-
-# Create data directory for memory storage
-RUN mkdir -p /data && \
-    chown -R node:node /data
 
 # Use non-root user
 USER node
 
+# Expose the port
+EXPOSE 8000
+
 # Command will be provided by smithery.yaml
 CMD ["node", "dist/src/server.js"]
-
-# Image metadata
-LABEL org.opencontainers.image.source="https://github.com/flight505/mcp-think-tank"
-LABEL org.opencontainers.image.description="An MCP server that provides reasoning and knowledge graph capabilities for AI assistants"
-LABEL org.opencontainers.image.licenses="MIT" 
