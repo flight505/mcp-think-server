@@ -25,6 +25,11 @@ export async function startServer(server: FastMCP, isToolScanMode: boolean): Pro
     if (isToolScanMode) {
       console.error(`[INFO] [transport] Tool scan mode enabled with timeout: ${_TOOL_SCAN_TIMEOUT}ms`);
       console.error(`[INFO] [transport] Scan configuration: retries=${_SCAN_RETRY_COUNT}, concurrency=${_SCAN_CONCURRENCY}, async=${_ASYNC_SCANNING}, stateless=${_STATELESS_MODE}`);
+      
+      // Additional logging to help with Smithery diagnostics
+      console.error(`[INFO] [transport] Smithery compatibility mode active`);
+      console.error(`[INFO] [transport] Node version: ${process.version}`);
+      console.error(`[INFO] [transport] Using simplified transport initialization for stability`);
     }
 
     // Determine transport type from environment variable, defaulting to streamable-http
@@ -34,9 +39,12 @@ export async function startServer(server: FastMCP, isToolScanMode: boolean): Pro
     if (transportType === "stdio") {
       setupStdioTransport(server);
     } else {
-      // Default to HTTP/streamable-HTTP transport for any other transport type
-      if (transportType !== "streamable-http" && transportType !== "http") {
-        console.error(`[WARN] [transport] Unsupported transport type: ${transportType}. Defaulting to streamable-HTTP transport.`);
+      // For Smithery compatibility, always use streamable-HTTP regardless of what was requested
+      // This provides better reliability for tool scanning
+      const effectiveTransport = isToolScanMode ? "streamable-http" : transportType;
+      
+      if (isToolScanMode && transportType !== "streamable-http") {
+        console.error(`[INFO] [transport] Overriding transport to streamable-http for tool scanning reliability`);
       }
       
       // Pass enhanced scanning options
