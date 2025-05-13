@@ -32,7 +32,7 @@ echo -e "${GREEN}✓ Build successful${NC}"
 # Step 4: Checking version consistency
 echo -e "\n${YELLOW}Step 4: Checking version consistency...${NC}"
 PACKAGE_VERSION=$(node -e "console.log(require('./package.json').version)")
-SERVER_VERSION=$(node dist/src/server.js --version 2>&1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+SERVER_VERSION=$(node dist/server.js --version 2>&1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+[-a-z0-9.]*')
 
 echo "Package version: $PACKAGE_VERSION"
 echo "Server version: $SERVER_VERSION"

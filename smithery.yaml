@@ -1,7 +1,7 @@
 # Smithery configuration file
 name: "@flight505/mcp-think-tank"
 description: "An MCP server that provides reasoning and knowledge graph capabilities for AI assistants"
-version: "2.0.7"
+version: "2.1.0-beta.1"
 displayName: "MCP Think Tank"
 summary: "A knowledge graph-based reasoning tool with structured thinking and web research capabilities"
 homepage: "https://github.com/flight505/mcp-think-tank"
@@ -43,7 +43,7 @@ startCommand:
   commandFunction: |-
     config => ({
       command: 'node',
-      args: ['dist/src/server.js'],
+      args: ['dist/server.js'],
       env: {
         ...config,
         NODE_ENV: 'production',

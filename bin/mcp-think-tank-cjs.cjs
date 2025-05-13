@@ -10,9 +10,15 @@ console.log = function() {
   return console.error.apply(console, arguments);
 };
 
+// Handle version flag directly in the bin script for faster response
+if (process.argv.includes('--version')) {
+  console.error('mcp-think-tank v2.1.0-beta.1');
+  process.exit(0);
+}
+
 // Get the path to the server module
 const path = require('path');
-const serverPath = path.join(__dirname, '../dist/src/server.js');
+const serverPath = path.join(__dirname, '../dist/server.js');
 
 // Launch the server using the dynamic import() function wrapped in a Promise
 (async function() {

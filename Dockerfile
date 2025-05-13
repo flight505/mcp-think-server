@@ -1,55 +1,48 @@
-FROM node:18-alpine
-
-# Create non-root user for security (fixed Alpine syntax)
-RUN addgroup -S -g 10001 appgroup && \
-    adduser -S -u 10000 -G appgroup appuser
+FROM node:18-alpine AS builder
+WORKDIR /app
 
 # Install bash for build scripts
 RUN apk add --no-cache bash
 
-WORKDIR /app
+# Copy package files
+COPY package*.json tsconfig.json ./
 
-# Copy package files first for better caching
-COPY package*.json ./
+# Install dependencies with caching
+RUN --mount=type=cache,target=/root/.npm npm install
 
-# Install ALL dependencies (including dev dependencies needed for build)
-RUN npm ci
-
-# Copy application code
+# Copy source code
 COPY . .
 
-# Build the application with explicit Smithery flag
-RUN SMITHERY_DEPLOYMENT=true npm run build
+# Build the application
+RUN npm run build
 
-# Create data directory with proper permissions
-RUN mkdir -p /tmp && \
-    chmod -R 755 /tmp && \
-    chown -R appuser:appgroup /app /tmp
+FROM node:18-alpine AS release
+WORKDIR /app
 
-# Make scripts executable
-RUN chmod +x dist/src/server.js bin/mcp-think-tank.js bin/mcp-think-tank-cjs.cjs docker-entrypoint.sh
+# Copy only the necessary files from builder
+COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/smithery.yaml ./
 
-# Cleanup dev dependencies after build to reduce image size
-RUN npm prune --production
+# Set production environment and improve tool scanning
+ENV NODE_ENV=production
+ENV TOOL_SCAN_TIMEOUT=30000
+ENV NODE_OPTIONS="--max-old-space-size=512"
+ENV MCP_HOST="0.0.0.0"
+ENV MCP_PORT=8000
+ENV MCP_TRANSPORT="streamable-http"
 
-# Switch to non-root user
-USER appuser
+# Install only production dependencies
+RUN npm ci --ignore-scripts --omit=dev
 
-# Expose the port (for HTTP mode)
+# Set executable permissions
+RUN chmod +x dist/server.js
+
+# Set the user to non-root
+USER node
+
+# Expose the port used by the server
 EXPOSE 8000
 
-# Environment variables for Smithery
-ENV NODE_ENV=production \
-    MCP_DEBUG=true \
-    AUTO_LINK=true \
-    SMITHERY_DEPLOYMENT=true \
-    MCP_TRANSPORT=streamable-http \
-    MCP_PORT=8000 \
-    MCP_HOST=0.0.0.0 \
-    MEMORY_PATH=/tmp/memory.jsonl
-
-# Use our entrypoint script
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
-
-# Default command (can be overridden)
-CMD [""]
+# Use ENTRYPOINT instead of CMD for better compatibility
+ENTRYPOINT ["node", "dist/server.js"]

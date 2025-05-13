@@ -12,12 +12,12 @@ console.log = (...args) => console.error(...args);
 
 // Handle --version flag directly in the bin script for faster response
 if (process.argv.includes('--version')) {
-  console.error('mcp-think-tank v2.0.7');
+  console.error('mcp-think-tank v2.1.0-beta.1');
   process.exit(0);
 }
 
 // Import the server module with error handling
-import('../dist/src/server.js').catch(e => { 
+import('../dist/server.js').catch(e => { 
   console.error(`Failed to start MCP Think Tank server:`, e); 
   process.exit(1); 
 }); 

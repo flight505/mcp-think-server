@@ -1,8 +1,8 @@
 {
   "name": "mcp-think-tank",
-  "version": "2.0.7",
+  "version": "2.1.0-beta.1",
   "description": "Structured thinking and knowledge management tool for Model Context Protocol",
-  "main": "dist/src/server.js",
+  "main": "dist/server.js",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"
@@ -10,8 +10,8 @@
   "scripts": {
     "build": "bash scripts/build.sh",
     "build:smithery": "SMITHERY_DEPLOYMENT=true bash scripts/build.sh",
-    "start": "node dist/src/server.js",
-    "postbuild": "node dist/src/server.js --version || exit 1",
+    "start": "node dist/server.js",
+    "postbuild": "node dist/server.js --version || exit 1",
     "dev": "tsx watch src/server.ts",
     "verify-publish": "bash scripts/verify-publish.sh",
     "test": "vitest run",
