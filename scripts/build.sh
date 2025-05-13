@@ -3,7 +3,9 @@
 # Exit on any error
 set -e
 
-echo "Building MCP Think Tank v2.1.0..."
+# Get version from package.json
+VERSION=$(node -p "require('./package.json').version")
+echo "Building MCP Think Tank v${VERSION}..."
 
 # Ensure core directories exist
 mkdir -p dist/src/core

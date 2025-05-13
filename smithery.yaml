@@ -1,10 +1,9 @@
 # Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
 name: "@flight505/mcp-think-tank"
 description: "An MCP server that provides reasoning and knowledge graph capabilities for AI assistants"
-version: "2.1.0"
+version: "2.0.6"
 displayName: "MCP Think Tank"
 summary: "A knowledge graph-based reasoning tool with structured thinking and web research capabilities"
-icon: "/assets/MCP_Think_Tank_dark.png"
 homepage: "https://github.com/flight505/mcp-think-tank"
 repository: "https://github.com/flight505/mcp-think-tank"
 keywords:
@@ -68,6 +67,7 @@ runtime:
   lazyLoading: true            # Enable lazy loading of tools and configurations
 
 startCommand:
+  # Support both transport methods per 2025 Smithery standards
   type: streamable-http
   configSchema:
     type: "object"
@@ -114,13 +114,13 @@ startCommand:
   commandFunction: |-
     (config) => ({
       command: 'npx',
-      args: ['-y', 'mcp-think-tank'],
+      args: ['-y', 'mcp-think-tank@2.0.6'],
       env: {
         NODE_ENV: 'production',
         MEMORY_PATH: config.MEMORY_PATH,
         EXA_API_KEY: config.EXA_API_KEY,
         TOOL_LIMIT: config.TOOL_LIMIT || "25",
-        MCP_TRANSPORT: config.MCP_TRANSPORT || 'streamable-http',
+        MCP_TRANSPORT: 'streamable-http',
         MCP_HOST: config.MCP_HOST || '0.0.0.0',
         MCP_PORT: config.MCP_PORT || '8000',
         MCP_PATH: config.MCP_PATH || '/mcp',
