@@ -31,10 +31,22 @@ ENV NODE_ENV=production \
     TOOL_SCAN_TIMEOUT=60000 \
     SCAN_RETRY_COUNT=3 \
     SCAN_CONCURRENCY=10 \
-    MEMORY_PATH=/data/memory.jsonl
+    MEMORY_PATH=/data/memory.jsonl \
+    MCP_TRANSPORT=streamable-http \
+    MCP_HOST=0.0.0.0 \
+    MCP_PORT=8000 \
+    MCP_PATH=/mcp \
+    AUTO_SHUTDOWN_MS=120000
+
+# Expose the port that the server will run on
+EXPOSE 8000
 
 # Run as non-root user
 USER node
+
+# Set healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8000/mcp || exit 1
 
 # Start the server
 CMD ["node", "dist/src/server.js"]

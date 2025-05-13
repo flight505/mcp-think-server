@@ -20,9 +20,14 @@ keywords:
 build:
   dockerfile: Dockerfile
 
+# Runtime configuration for Smithery compatibility
+runtime:
+  maxToolScanTimeoutMs: 60000
+  lazyLoading: true
+
 # Server configuration
 startCommand:
-  type: stdio
+  type: streamable-http
   configSchema:
     type: object
     properties:
@@ -49,6 +54,10 @@ startCommand:
         EXA_API_KEY: config.exaApiKey,
         TOOL_LIMIT: config.toolLimit?.toString(),
         AUTO_LINK: config.autoLink?.toString(),
+        MCP_TRANSPORT: 'streamable-http',
+        MCP_HOST: '0.0.0.0',
+        MCP_PORT: '8000',
+        MCP_PATH: '/mcp',
         ASYNC_SCANNING: 'true',
         TOOL_SCAN_TIMEOUT: '60000',
         SCAN_RETRY_COUNT: '3',
