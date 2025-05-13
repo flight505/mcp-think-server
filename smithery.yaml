@@ -19,20 +19,25 @@ keywords:
 # Build configuration
 build:
   dockerfile: Dockerfile
+  dockerBuildPath: .
 
 # Server configuration for Smithery compatibility
 startCommand:
-  type: http
-  httpRoute: "/mcp"
+  type: stdio
   configSchema:
     type: object
     properties:
       memoryPath:
         type: string
         description: "Path to memory.jsonl file for persistent knowledge graph storage"
+        default: "/tmp/memory.jsonl"
       exaApiKey:
         type: string
         description: "API key for Exa web search functionality"
+      toolLimit:
+        type: number
+        description: "Maximum tool calls per session"
+        default: 25
     required: []
   commandFunction: |-
     config => ({
@@ -41,9 +46,12 @@ startCommand:
       env: {
         ...config,
         NODE_ENV: 'production',
-        MCP_TRANSPORT: 'http',
-        MCP_PATH: '/mcp',
-        MEMORY_PATH: config.memoryPath || '/data/memory.jsonl'
+        MCP_TRANSPORT: 'stdio',
+        MEMORY_PATH: config.memoryPath || '/tmp/memory.jsonl',
+        TOOL_LIMIT: String(config.toolLimit || 25),
+        MCP_DEBUG: 'true',
+        AUTO_LINK: 'true',
+        SMITHERY_DEPLOYMENT: 'true'
       }
     })
 

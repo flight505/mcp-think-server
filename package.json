@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "bash scripts/build.sh",
+    "build:smithery": "SMITHERY_DEPLOYMENT=true bash scripts/build.sh",
     "start": "node dist/src/server.js",
     "postbuild": "node dist/src/server.js --version || exit 1",
     "dev": "tsx watch src/server.ts",
