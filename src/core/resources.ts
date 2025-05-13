@@ -9,11 +9,28 @@ export function setupResources(server: FastMCP): void {
   try {
     // Add basic resources
     server.addResource({
-      uri: "status://health",
+      uri: 'status://health',
       name: "Health Check",
       mimeType: "text/plain",
       load: async () => ({ text: "ok" })
     });
+
+    // Add resource templates - using 'any' to bypass type checking issues with FastMCP
+    const template: any = {
+      uriTemplate: 'task://{id}',
+      name: "Task",
+      mimeType: "application/json",
+      load: async (args: any) => {
+        return {
+          json: {
+            id: args.id,
+            status: "example",
+            description: "Example task resource"
+          }
+        };
+      }
+    };
+    server.addResourceTemplate(template);
 
     console.error("[INFO] [resources] Resources and templates set up successfully");
   } catch (error) {

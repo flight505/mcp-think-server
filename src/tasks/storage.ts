@@ -315,6 +315,66 @@ export class TaskStorage extends EventEmitter {
    * Save timeout
    */
   private _saveTimeout: NodeJS.Timeout | null = null;
+
+  /**
+   * Compatibility method for tests - Add a task
+   * @param task Task to add
+   * @returns Added task
+   */
+  async addTask(task: Task): Promise<Task> {
+    // If task already has an ID, use it directly
+    if (task.id) {
+      this.tasks.set(task.id, task);
+      this.save();
+      return task;
+    } else {
+      return this.add(task);
+    }
+  }
+
+  /**
+   * Compatibility method for tests - Get all tasks
+   * @returns Array of tasks
+   */
+  async getAllTasks(): Promise<Task[]> {
+    return this.getAll();
+  }
+
+  /**
+   * Compatibility method for tests - Update a task
+   * @param id Task ID
+   * @param update Task update
+   * @returns Updated task or throws if not found
+   */
+  async updateTask(id: string, update: Partial<Task>): Promise<Task> {
+    const updatedTask = this.update(id, update);
+    if (!updatedTask) {
+      throw new Error(`Task with ID ${id} not found`);
+    }
+    return updatedTask;
+  }
+
+  /**
+   * Compatibility method for tests - Delete a task
+   * @param id Task ID
+   * @returns True if deleted, false if not found
+   */
+  async deleteTask(id: string): Promise<boolean> {
+    return this.delete(id);
+  }
+
+  /**
+   * Compatibility method for tests - Get tasks by criteria
+   * @param filter Filter criteria
+   * @returns Array of tasks matching criteria
+   */
+  async getTasksBy(filter: Partial<Task>): Promise<Task[]> {
+    return this.getAll().filter(task => {
+      return Object.entries(filter).every(([key, value]) => 
+        task[key as keyof Task] === value
+      );
+    });
+  }
 }
 
 // Export a singleton instance

@@ -1,5 +1,39 @@
 # Changelog
 
+## 2.1.4 (2025-05-13)
+
+### Fixed
+- Created robust CommonJS script (mcp-think-tank-cjs.cjs) for better compatibility across all Node.js versions
+- Updated bin script to use cross-environment dynamic imports with proper error handling
+- Fixed global installation issues with proper path resolution
+- Improved resilience to module system differences between ESM and CommonJS
+- Enhanced npx and global installation reliability
+
+## 2.1.3 (2025-05-13)
+
+### Fixed
+- Fixed ESM/CommonJS compatibility issues with the CLI script
+- Updated bin script to use dynamic imports to prevent 'require is not defined' errors
+- Added notes about Node.js version compatibility
+- Improved documentation for dependency warnings
+
+## 2.1.2 (2025-05-13)
+
+### Fixed
+- Fixed bin script issues with global installation and npx
+- Improved CommonJS compatibility for the CLI
+- Enhanced task storage compatibility with test suite
+- Fixed TypeScript errors in resource handlers
+
+## 2.1.1 (2025-05-13)
+
+### Fixed
+- Ensured compatibility with Claude Desktop and Cursor
+- Fixed test issues and added 'bin' directory to package files
+- Improved package structure for better npx installation experience
+- Fixed version synchronization between package.json and exported config
+- Addressed resource URI string format in tests
+
 ## 2.1.0 (2025-05-13)
 
 ### Fixed

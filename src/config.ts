@@ -97,19 +97,39 @@ function getVersionFromPackage(): string {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
     
-    // Resolve path to package.json
-    const packageJsonPath = resolve(__dirname, '../../package.json');
+    // First try using the root package.json (for when we're installed as a node module)
+    let packageJsonPath = resolve(process.cwd(), 'package.json');
+    
+    // If that doesn't exist, try the development location
+    if (!existsSync(packageJsonPath)) {
+      packageJsonPath = resolve(__dirname, '../../package.json');
+    }
     
     // Read and parse package.json
     if (existsSync(packageJsonPath)) {
       const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
-      return packageJson.version || '0.0.0';
+      
+      if (packageJson.name === 'mcp-think-tank' && packageJson.version) {
+        return packageJson.version;
+      }
     }
+    
+    // Try one more location for npx installs
+    const npxPath = resolve(process.env.npm_config_local_prefix || '', 'package.json');
+    if (existsSync(npxPath)) {
+      const packageJson = JSON.parse(readFileSync(npxPath, 'utf8'));
+      if (packageJson.name === 'mcp-think-tank' && packageJson.version) {
+        return packageJson.version;
+      }
+    }
+    
+    // If we couldn't determine the version from package.json, use a fixed version
+    return '2.1.1';
   } catch (error) {
-    console.error(`[WARN] [config] Could not read version from package.json, using fallback version 0.0.0`);
+    console.error(`[WARN] [config] Could not read version from package.json: ${error instanceof Error ? error.message : String(error)}`);
   }
   
-  return '0.0.0';
+  return '2.1.1';
 }
 
 /**

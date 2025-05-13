@@ -12,22 +12,25 @@ vi.mock('fastmcp', () => {
   };
 });
 
-// Mock the storage module
-vi.mock('../../src/memory/storage.js', () => {
+// Mock the memory store module
+vi.mock('../../src/memory/store/index.js', () => {
   return {
-    graph: {
+    memoryStore: {
       addEntity: vi.fn(),
       addRelation: vi.fn(),
-      addObservations: vi.fn()
-    },
-    graphStorage: {
+      addObservations: vi.fn(),
       save: vi.fn()
     }
   };
 });
 
-// Import the function after mocking dependencies
-
+// Mock the formatters module
+vi.mock('../../src/think/formatters.js', () => {
+  return {
+    formatThought: vi.fn((content) => content),
+    detectFormatterType: vi.fn(() => 'general')
+  };
+});
 
 describe('Think Tool Step Counter', () => {
   let server: FastMCP;

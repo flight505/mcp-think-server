@@ -1,6 +1,6 @@
 {
   "name": "mcp-think-tank",
-  "version": "2.1.0",
+  "version": "2.1.4",
   "description": "Structured thinking and knowledge management tool for Model Context Protocol",
   "main": "dist/src/server.js",
   "type": "module",
@@ -57,9 +57,7 @@
   },
   "files": [
     "dist",
-    "README.md",
-    "LICENSE",
-    "CHANGELOG.md"
+    "bin"
   ],
   "repository": {
     "type": "git",
@@ -69,7 +67,7 @@
     "access": "public"
   },
   "bin": {
-    "mcp-think-tank": "dist/src/server.js"
+    "mcp-think-tank": "./bin/mcp-think-tank-cjs.cjs"
   },
-  "readme": "# MCP Think Tank\n\nA Model Context Protocol (MCP) server for structured thinking, knowledge graph memory, and task management.\n\n## Fixed in 2.1.0\n\n- Removed connection check interval that was causing 60-second timeouts\n- Simplified logging to prevent errors\n\n## Usage\n\n```\nnpx mcp-think-tank\n```\n\n## Configuration\n\nConfigure in your `~/.cursor/mcp.json` file:\n\n```json\n{\n  \"mcpServers\": {\n    \"think-tank\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"mcp-think-tank\"],\n      \"type\": \"streamable-http\",\n      \"env\": {\n        \"MEMORY_PATH\": \"/path/to/memory.jsonl\",\n        \"EXA_API_KEY\": \"your-exa-api-key-if-using-research\"\n      }\n    }\n  }\n}\n```\n"
+  "readme": "# MCP Think Tank\n\nA Model Context Protocol (MCP) server for structured thinking, knowledge graph memory, and task management.\n\n## Fixed in 2.1.3\n\n- Fixed ESM/CommonJS compatibility issues with npx installation\n- Updated bin script to work with Node.js 18+\n- Improved module loading to prevent 'require is not defined' errors\n\n## Fixed in 2.1.2\n\n- Fixed bin script issues with global installation\n- Improved CommonJS compatibility for the CLI\n\n## Fixed in 2.1.1\n\n- Ensured compatibility with Claude Desktop and Cursor\n- Fixed test issues and added 'bin' directory to package files\n- Improved package structure for better npx installation experience\n\n## Fixed in 2.1.0\n\n- Removed connection check interval that was causing 60-second timeouts\n- Simplified logging to prevent errors\n\n## Usage\n\n```\nnpx mcp-think-tank\n```\n\n## Requirements\n\n- Node.js 18.0.0 or higher\n- Note: Some dependencies may warn about higher Node.js requirements but the package will work on Node 18+\n\n## Configuration\n\nConfigure in your `~/.cursor/mcp.json` file:\n\n```json\n{\n  \"mcpServers\": {\n    \"think-tank\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"mcp-think-tank\"],\n      \"type\": \"streamable-http\",\n      \"env\": {\n        \"MEMORY_PATH\": \"/path/to/memory.jsonl\",\n        \"EXA_API_KEY\": \"your-exa-api-key-if-using-research\"\n      }\n    }\n  }\n}\n```\n"
 }
