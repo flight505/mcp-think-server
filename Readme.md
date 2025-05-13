@@ -165,9 +165,14 @@ MCP Think Tank includes comprehensive features to ensure tools are used responsi
 The easiest way to use MCP Think Tank is via NPX in Cursor using mcp.json file, which runs the latest version without global installation, 
 
 ```bash
+npx mcp-think-tank@2.0.7
+```
+
+For the latest version (which may have compatibility issues):
+```bash
 npx mcp-think-tank@latest
 ```
-> some users have issues with npx @latest in Cursor, if so try specifying the version mcp-think-tank@2.0.9 in the .json file, or install it globally:
+> some users have issues with npx @latest in Cursor, if so try specifying the version mcp-think-tank@2.0.7 in the .json file, or install it globally:
 
 ### Global Installation
 
@@ -195,7 +200,7 @@ MCP Think Tank is configured primarily through environment variables or via your
   "mcpServers": {
     "think-tank": {
       "command": "npx",
-      "args": ["-y", "mcp-think-tank"],
+      "args": ["-y", "mcp-think-tank@2.0.7"],
       "type": "streamable-http",
       "env": {
         "MEMORY_PATH": "/absolute/path/to/your/project/memory.jsonl",
@@ -236,7 +241,7 @@ Example configuration with advanced settings in `.cursor/mcp.json`:
   "mcpServers": {
     "think-tank": {
       "command": "npx",
-      "args": ["-y", "mcp-think-tank"],
+      "args": ["-y", "mcp-think-tank@2.0.7"],
       "env": {
         "MEMORY_PATH": "./project-memory.jsonl",
         "EXA_API_KEY": "your-exa-api-key-here",
