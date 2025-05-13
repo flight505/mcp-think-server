@@ -1,4 +1,4 @@
-# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+# Smithery configuration file
 name: "@flight505/mcp-think-tank"
 description: "An MCP server that provides reasoning and knowledge graph capabilities for AI assistants"
 version: "2.0.7"
@@ -15,109 +15,87 @@ keywords:
   - exa
   - web-research
   - think
-readme: |
-  ## Overview
 
-MCP Think Tank is a powerful Model Context Protocol (MCP) server designed to enhance the capabilities of AI assistants like **Cursor** and **Claude @Web**. It provides a structured environment for enhanced reasoning, persistent memory, and responsible tool usage.
-
-Key capabilities include advanced **Sequential Thinking & Chained Reasoning**, a robust **Knowledge Graph Memory** system with versioning, and intelligent **Tool Orchestration with Call-Limit Safeguards**. This platform empowers AI to tackle complex problems through structured analysis, maintain knowledge across sessions, and utilize external resources like web search, all while adhering to configurable usage limits.
-
-## 🎯 Philosophy
-
-MCP Think Tank is built on three core principles:
-
-1.  **Elegant Simplicity**: Minimal, well-designed tools that complement AI capabilities rather than trying to replicate them.
-2.  **Enhanced Reflection**: Gentle guidance fosters better reasoning and self-reflection without rigid constraints.
-3.  **Persistent Context**: A simple, yet effective knowledge graph provides memory across conversations.
-
-## Key Features
-
-*   💭 **Think Tool**: Dedicated space for structured reasoning and self-reflection.
-*   🧩 **Knowledge Graph**: Simple and effective persistent memory system.
-*   📝 **Task Management Tools**: Plan, track, and update tasks, integrated with the knowledge graph.
-*   🌐 **Web Research Tools (Exa)**: Search the web and get sourced answers using the Exa API.
-*   🔍 **Memory Tools**: Easy-to-use tools for storing and retrieving information from the knowledge graph.
-*   🤝 **Client Support**: Seamless integration with Cursor, Claude @Web, and other MCP clients.
-*   🛡️ **Tool Orchestration & Call Limits**: Built-in safeguards for efficient and responsible tool usage with configurable limits.
-*   ⚡ **Content Caching**: Performance optimization for file and URL operations with automatic duplicate detection.
-*   🔄 **Sequential Thinking**: Enables multi-step reasoning processes with progress tracking.
-*   🔎 **Self-Reflection**: Automated reflection passes to improve reasoning quality.
-*   📊 **Structured Outputs**: Automatic formatting of thought processes for better readability.
-*   🔗 **Research Integration**: Seamless incorporation of web research findings into reasoning flows.
-
-## Benefits of Structured Thinking
-
-Leveraging the `think` tool provides a dedicated space for systematic reasoning, encouraging:
-
-*   Clear problem definition
-*   Relevant context gathering
-*   Step-by-step analysis
-*   Self-reflection on reasoning
-*   Well-formed conclusions
-  **Note for Smithery users:** All tools are visible in the tool list, but Exa web research tools require an API key to be configured before use. The server implements lazy loading - tools only authenticate with your API key upon execution, not during initialization.
-  
-  For more details, see the full documentation at: https://github.com/flight505/mcp-think-tank
-
+# Build configuration
 build:
   dockerfile: Dockerfile
 
-# Runtime configuration for Smithery compatibility with 2025 standards
-runtime:
-  maxToolScanTimeoutMs: 120000      # Increased timeout for tool scanning (120 seconds)
-  lazyLoading: true                # Enable lazy loading of tools and configurations
-  toolScanModeEnabled: true        # Enable dedicated tool scanning mode
-  asynchronousScanning: true       # Use asynchronous scanning for better performance
-  smartToolRegistration: true      # Enable intelligent tool registration
-  statelessMode: false             # Keep stateful connections for better reliability
-  scanRetryCount: 5                # Increased number of retries if tool scanning fails
-  scanConcurrency: 10              # Maximum number of concurrent tool scans
-  disableCache: true               # Disable caching for more reliable scans
-  toolScanPolling: true            # Enable polling for tool scan completion
-  skipPrecache: true               # Skip precaching for better stability 
-  allowOptionsRequests: true       # Enable OPTIONS requests for CORS preflight
-  corsEnabled: true                # Enable CORS for cross-origin requests
-  keepAliveEnabled: true           # Enable TCP keep-alive for better connection stability
-  toolScanTimeoutBuffer: 30000     # Extra buffer time for tool scanning (30 seconds)
-
+# Server configuration
 startCommand:
   type: stdio
   configSchema:
-    type: "object"
-    title: "Think Tool Configuration"
-    description: "Configuration options for the Think Tank MCP server"
+    type: object
     properties:
-      MEMORY_PATH:
-        type: "string"
-        description: "Custom path for memory storage. Important: Use a unique path for each project to avoid knowledge graph conflicts."
-      EXA_API_KEY:
-        type: "string"
-        description: "Exa API key (required for web search tools). Sign up at exa.ai to obtain a key."
-      TOOL_LIMIT:
-        type: "string"
-        description: "Maximum number of tool calls per session (default: 25)"
-        default: "25"
-      MCP_DEBUG:
-        type: "string"
-        description: "Enable debug mode"
-        default: "false"
-        enum: ["true", "false"]
+      memoryPath:
+        type: string
+        description: "Path to memory.jsonl file for persistent knowledge graph storage"
+      exaApiKey:
+        type: string
+        description: "API key for Exa web search functionality"
+      toolLimit:
+        type: number
+        description: "Maximum number of tool calls allowed per session (default: 25)"
+      autoLink:
+        type: boolean
+        description: "Enable automatic entity linking in knowledge graph (default: true)"
     required: []
-  commandFunction: |-
-    (config) => ({
-      command: 'node', 
+    description: "Configuration options for MCP Think Tank server"
+  commandFunction: |
+    config => ({
+      command: 'node',
       args: ['dist/src/server.js'],
       env: {
-        NODE_ENV: 'production',
-        MEMORY_PATH: config.MEMORY_PATH,
-        EXA_API_KEY: config.EXA_API_KEY,
-        TOOL_LIMIT: config.TOOL_LIMIT || "25",
-        MCP_TRANSPORT: 'stdio',
-        MCP_DEBUG: config.MCP_DEBUG || 'false'
+        MEMORY_PATH: config.memoryPath || '/data/memory.jsonl',
+        EXA_API_KEY: config.exaApiKey,
+        TOOL_LIMIT: config.toolLimit?.toString(),
+        AUTO_LINK: config.autoLink?.toString(),
+        ASYNC_SCANNING: 'true',
+        TOOL_SCAN_TIMEOUT: '60000',
+        SCAN_RETRY_COUNT: '3',
+        SCAN_CONCURRENCY: '10'
       }
     })
 
-clients:
-  - claude
-  - cursor
-  - windsurf
-  - cline
+# Documentation for users
+readme: |
+  ## MCP Think Tank
+  
+  A powerful MCP server that provides reasoning and knowledge graph capabilities for AI assistants. Key features include:
+  
+  - 💭 **Think Tool**: Dedicated space for structured reasoning and self-reflection.
+  - 🧩 **Knowledge Graph**: Simple and effective persistent memory system.
+  - 📝 **Task Management**: Plan, track, and update tasks integrated with the knowledge graph.
+  - 🌐 **Web Research**: Search the web and get sourced answers using Exa API.
+  
+  ### Configuration
+  
+  - **memoryPath**: Path to memory.jsonl file (required, defaults to /data/memory.jsonl in the container)
+  - **exaApiKey**: API key for Exa web search (required for search tools)
+  - **toolLimit**: Maximum tool calls per session (default: 25)
+  - **autoLink**: Enable automatic entity linking (default: true)
+  
+  ### Available Tools
+  
+  **Think & Reasoning**
+  - `think`: Structure your reasoning process with self-reflection
+  
+  **Knowledge Graph**
+  - `upsert_entities`: Create or update entities in knowledge graph
+  - `create_relations`: Create relations between entities
+  - `add_observations`: Add observations to existing entities
+  - `search_nodes`: Search for entities by keyword
+  - `open_nodes`: Retrieve specific entities
+  - `memory_query`: Query memory with filters (time, tags, keywords)
+  
+  **Task Management**
+  - `plan_tasks`: Create multiple tasks with priorities
+  - `list_tasks`: View and filter current tasks
+  - `next_task`: Get highest priority task
+  - `complete_task`: Mark task as done
+  - `update_tasks`: Modify existing tasks
+  
+  **Web Research**
+  - `exa_search`: Search the web
+  - `exa_answer`: Get factual answers with sources
+  
+  For more information, visit the [GitHub repository](https://github.com/flight505/mcp-think-tank). 
