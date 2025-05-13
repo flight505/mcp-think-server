@@ -3,9 +3,9 @@ import { Task } from '../src/tasks/schemas.js';
 import { TaskStorage } from '../src/tasks/storage.js';
 import { v4 as uuidv4 } from 'uuid';
 
-// Mock the dependencies
-vi.mock('fs', () => ({
-  default: {
+// Fix the fs mock to match Node.js ESM module structure
+vi.mock('fs', async () => {
+  return {
     existsSync: vi.fn(() => false),
     writeFileSync: vi.fn(),
     readFileSync: vi.fn(),
@@ -16,9 +16,27 @@ vi.mock('fs', () => ({
       end: vi.fn(),
       on: vi.fn((event, callback) => callback())
     })),
-    renameSync: vi.fn()
-  }
-}));
+    renameSync: vi.fn(),
+    default: {
+      existsSync: vi.fn(() => false),
+      writeFileSync: vi.fn(),
+      readFileSync: vi.fn(),
+      appendFileSync: vi.fn(),
+      mkdirSync: vi.fn(),
+      createWriteStream: vi.fn(() => ({
+        write: vi.fn(),
+        end: vi.fn(),
+        on: vi.fn((event, callback) => callback())
+      })),
+      renameSync: vi.fn()
+    },
+    promises: {
+      readFile: vi.fn().mockResolvedValue(''),
+      writeFile: vi.fn().mockResolvedValue(undefined),
+      mkdir: vi.fn().mockResolvedValue(undefined)
+    }
+  };
+});
 
 vi.mock('../src/utils/fs.js', () => ({
   createDirectory: vi.fn()
