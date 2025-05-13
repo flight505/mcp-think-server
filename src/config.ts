@@ -124,12 +124,12 @@ function getVersionFromPackage(): string {
     }
     
     // If we couldn't determine the version from package.json, use a fixed version
-    return '2.1.1';
+    return '2.0.7';
   } catch (error) {
     console.error(`[WARN] [config] Could not read version from package.json: ${error instanceof Error ? error.message : String(error)}`);
   }
   
-  return '2.1.1';
+  return '2.0.7';
 }
 
 /**
