@@ -3,8 +3,8 @@
 # Exit on any error
 set -e
 
-# Get version from package.json
-VERSION=$(node -p "require('./package.json').version")
+# Get version from package.json using CommonJS require instead of ES import
+VERSION=$(node -e "const fs = require('fs'); console.log(JSON.parse(fs.readFileSync('./package.json')).version);")
 echo "Building MCP Think Tank v${VERSION}..."
 
 # Check if we're building for Smithery deployment
@@ -20,7 +20,6 @@ mkdir -p dist/src/utils
 mkdir -p dist/src/memory
 mkdir -p dist/src/memory/store
 mkdir -p bin
-mkdir -p /tmp
 
 # Run TypeScript compiler
 echo "Running TypeScript compiler..."

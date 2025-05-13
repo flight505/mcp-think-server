@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import { EventEmitter } from 'events';
 import { homedir } from 'os';
-import { Task, TaskStatus } from './model.js';
+import { Task, TaskStatus, TaskPriority, createTask, updateTask as updateTaskData } from './schemas.js';
 
 /**
  * Storage for tasks
@@ -34,30 +34,33 @@ export class TaskStorage extends EventEmitter {
       throw new Error('Task storage not yet loaded');
     }
     
-    // Generate UUID
-    const id = crypto.randomUUID();
-    
-    // Create task object
-    const newTask: Task = {
-      id,
-      created: new Date().toISOString(),
-      ...task,
-      status: task.status || 'todo',
-      priority: task.priority || 'medium'
-    };
-    
-    // Add to map
-    this.tasks.set(id, newTask);
-    
-         // Save to storage
-     this.save();
-     
-     console.error(`[DEBUG] [taskStorage] Task ${id} added`);
-     
-     // Emit event
-     this.emit('task-added', newTask);
-    
-    return newTask;
+    try {
+      // Create a new task with validation
+      const newTask = createTask({
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        due: task.due,
+        tags: task.tags,
+        dependsOn: task.dependsOn
+      });
+      
+      // Add to map
+      this.tasks.set(newTask.id, newTask);
+      
+      // Save to storage
+      this.save();
+       
+      console.error(`[DEBUG] [taskStorage] Task ${newTask.id} added`);
+       
+      // Emit event
+      this.emit('task-added', newTask);
+      
+      return newTask;
+    } catch (error) {
+      console.error(`[ERROR] [taskStorage] Failed to add task: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
   }
   
   /**
@@ -90,21 +93,23 @@ export class TaskStorage extends EventEmitter {
       return undefined;
     }
     
-    const updatedTask = {
-      ...task,
-      ...update,
-      id
-    };
-    
-    this.tasks.set(id, updatedTask);
-    this.save();
-    
-    console.error(`[DEBUG] [taskStorage] Task ${id} updated`);
-    
-    // Emit event
-    this.emit('task-updated', updatedTask);
-    
-    return updatedTask;
+    try {
+      // Use the updateTaskData function for validation
+      const updatedTask = updateTaskData(task, update);
+      
+      this.tasks.set(id, updatedTask);
+      this.save();
+      
+      console.error(`[DEBUG] [taskStorage] Task ${id} updated`);
+      
+      // Emit event
+      this.emit('task-updated', updatedTask);
+      
+      return updatedTask;
+    } catch (error) {
+      console.error(`[ERROR] [taskStorage] Failed to update task ${id}: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
   }
   
   /**

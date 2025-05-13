@@ -1,0 +1,34 @@
+# Node modules and logs
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Development files
+.git
+.gitignore
+.eslintrc.js
+.editorconfig
+.vscode
+.idea
+tests
+coverage
+*.md
+!README.md
+
+# Environment 
+.env
+.env.*
+
+# Temporary files
+tmp
+temp
+.tmp
+.temp
+
+# Build cache files
+.cache
+.tsbuildinfo

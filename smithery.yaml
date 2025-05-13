@@ -21,9 +21,10 @@ build:
   dockerfile: Dockerfile
   dockerBuildPath: .
 
-# Server configuration for Smithery compatibility
+# Server configuration for Smithery compatibility 
+# Using streamable-http instead of stdio for better compatibility
 startCommand:
-  type: stdio
+  type: streamable-http
   configSchema:
     type: object
     properties:
@@ -46,7 +47,10 @@ startCommand:
       env: {
         ...config,
         NODE_ENV: 'production',
-        MCP_TRANSPORT: 'stdio',
+        MCP_TRANSPORT: 'streamable-http',
+        MCP_HOST: '0.0.0.0',
+        MCP_PORT: '8000',
+        MCP_PATH: '/mcp',
         MEMORY_PATH: config.memoryPath || '/tmp/memory.jsonl',
         TOOL_LIMIT: String(config.toolLimit || 25),
         MCP_DEBUG: 'true',
@@ -54,62 +58,3 @@ startCommand:
         SMITHERY_DEPLOYMENT: 'true'
       }
     })
-
-# Documentation for users
-readme: |
-  ## Overview
-
-  MCP Think Tank is a powerful Model Context Protocol (MCP) server designed to enhance the capabilities of AI assistants like **Cursor** and **Claude @Web**. It provides a structured environment for reasoning, knowledge management, and conducting web research.
-
-  ### Key Features:
-
-  * **Structured Thinking**: Provides space for step-by-step reasoning with self-reflection capabilities
-  * **Knowledge Graph**: Maintains a persistent graph for entities and relationships
-  * **Task Management**: Create, track and manage tasks with priorities and dependencies
-  * **Web Research**: Built-in Exa search and answer capabilities
-  * **Memory Management**: Persistent storage of information between sessions
-
-  ## Usage
-
-  This MCP server works with AI assistants that support the Model Context Protocol, allowing for enhanced reasoning and knowledge management.
-
-  To use with Cursor, simply install:
-
-  ```bash
-  npm install -g @flight505/mcp-think-tank@2.0.7
-  ```
-
-  The server will automatically connect to your AI assistant when needed.
-
-  ## Configuration
-
-  You can configure the memory location and provide API keys for enhanced functionality:
-
-  * **memoryPath**: Path to the memory.jsonl file for persistent knowledge storage
-  * **exaApiKey**: API key for web search capabilities
-  
-  ### Available Tools
-  
-  **Think & Reasoning**
-  - `think`: Structure your reasoning process with self-reflection
-  
-  **Knowledge Graph**
-  - `upsert_entities`: Create or update entities in knowledge graph
-  - `create_relations`: Create relations between entities
-  - `add_observations`: Add observations to existing entities
-  - `search_nodes`: Search for entities by keyword
-  - `open_nodes`: Retrieve specific entities
-  - `memory_query`: Query memory with filters (time, tags, keywords)
-  
-  **Task Management**
-  - `plan_tasks`: Create multiple tasks with priorities
-  - `list_tasks`: View and filter current tasks
-  - `next_task`: Get highest priority task
-  - `complete_task`: Mark task as done
-  - `update_tasks`: Modify existing tasks
-  
-  **Web Research**
-  - `exa_search`: Search the web
-  - `exa_answer`: Get factual answers with sources
-  
-  For more information, visit the [GitHub repository](https://github.com/flight505/mcp-think-tank).
