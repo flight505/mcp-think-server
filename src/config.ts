@@ -30,56 +30,33 @@ export interface ServerConfig {
   debug: boolean;
 }
 
-/**
- * Initialize configuration
- * 
- * @returns Server configuration object
- */
+let config: ServerConfig;
+
 function initializeConfig(): ServerConfig {
   // Parse command line arguments
   const argv = minimist(process.argv.slice(2));
-
-  // Determine base directory for finding package.json
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
-  const basedir = resolve(__dirname, '..', '..');
-
-  // Dynamically read version from package.json
-  let version = '2.1.0'; // Fallback version
-  try {
-    const packagePath = resolve(basedir, 'package.json');
-    if (existsSync(packagePath)) {
-      const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
-      version = packageJson.version;
-      logger.debug(`Read version ${version} from package.json`);
-    }
-  } catch (error) {
-    logger.warn(`Could not read version from package.json, using fallback version ${version}`, error);
-  }
-
-  // Memory path handling
-  const defaultMemoryPath = join(homedir(), '.mcp-think-tank', 'memory.jsonl');
-  const memoryPath = argv['memory-path'] || process.env.MEMORY_PATH || defaultMemoryPath;
   
-  // Ensure memory directory exists
-  try {
-    createDirectory(dirname(memoryPath));
-    logger.debug(`Ensured memory directory exists: ${dirname(memoryPath)}`);
-  } catch (error) {
-    logger.error(`Failed to create memory directory: ${error instanceof Error ? error.message : String(error)}`);
-  }
-
-  // Handle special command line flags
-  if (argv.version) {
-    logger.info(`mcp-think-tank v${version}`);
+  // Show version and exit if --version flag provided
+  if (argv.version || argv.v) {
+    // We just need the version here
+    const version = getVersionFromPackage();
+    console.error(`[INFO] [config] mcp-think-tank v${version}`);
     process.exit(0);
   }
-
+  
+  // Show memory path and exit if --show-memory-path flag provided
   if (argv['show-memory-path']) {
-    logger.info(memoryPath);
+    const memoryPath = getMemoryPath(argv);
+    console.error(`[INFO] [config] Memory path: ${memoryPath}`);
     process.exit(0);
   }
-
+  
+  // Get version from package.json
+  const version = getVersionFromPackage();
+  
+  // Get memory path (from args or env or default)
+  const memoryPath = getMemoryPath(argv);
+  
   // Build configuration object
   return {
     // Version
@@ -114,6 +91,59 @@ function initializeConfig(): ServerConfig {
 }
 
 /**
- * Exported configuration object
+ * Get version from package.json
+ * @returns version string
  */
-export const config = initializeConfig();
+function getVersionFromPackage(): string {
+  try {
+    // Get directory path for the current module
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    
+    // Resolve path to package.json
+    const packageJsonPath = resolve(__dirname, '../../package.json');
+    
+    // Read and parse package.json
+    if (existsSync(packageJsonPath)) {
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+      return packageJson.version || '0.0.0';
+    }
+  } catch (error) {
+    logger.warn(`Could not read version from package.json, using fallback version 0.0.0`);
+  }
+  
+  return '0.0.0';
+}
+
+/**
+ * Get memory path from args or env or default
+ * @param argv Command line arguments
+ * @returns Memory path
+ */
+function getMemoryPath(argv: minimist.ParsedArgs): string {
+  // Priority: command line args > env var > default location
+  
+  // From command line args
+  if (argv['memory-path']) {
+    return argv['memory-path'] as string;
+  }
+  
+  // From environment variable
+  if (process.env.MEMORY_PATH) {
+    return process.env.MEMORY_PATH;
+  }
+  
+  // Default location in user's home directory
+  const defaultPath = join(homedir(), '.mcp-think-tank/memory.jsonl');
+  
+  // Ensure directory exists
+  createDirectory(dirname(defaultPath));
+  
+  return defaultPath;
+}
+
+// Initialize config on first import
+config = initializeConfig();
+
+// Export config object
+export { config };
