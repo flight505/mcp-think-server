@@ -112,16 +112,6 @@ A suite of tools allows the AI to manage project tasks directly within the conve
 * `complete_task`: Mark tasks as completed
 * `update_tasks`: Update existing tasks with new information
 
-#### Enhanced Task Validation (v2.1.0+)
-
-As of version 2.1.0, tasks use a robust Zod-based validation system that provides:
-
-* Type-safe task operations with descriptive error messages
-* Strong TypeScript integration with inferred types
-* Schema validation with proper defaults
-* Better support for task relationships and dependencies
-
-This validation ensures that all task operations maintain data integrity and provide helpful feedback when issues arise.
 
 ### Web Research Tools (Exa)
 
@@ -148,14 +138,6 @@ MCP Think Tank includes comprehensive features to ensure tools are used responsi
 > ⚠️ **Important Note READ THIS:** 
 > When updating to a new version of MCP Think Tank in Cursor or Claude you might create multiple instances of the MCP Think Tank server, causing aditional Node.js instances to be created, dragging down your system performance - this is a known issue with MCP servers - kill all mcp-think-tank processes in your system and check you have only one node.js instance running.
 
-> ⚠️ **Version 2.1.0 Update:** 
-> Version 2.1.0 features major code restructuring with a new modular architecture, improved error handling, and a robust logging system. The server is now more maintainable and reliable, with better type safety and cleaner organization.
-
-> ⚠️ **Version 2.0.11 Update:** 
-> Version 2.0.11 includes critical fixes for Smithery compatibility issues and tool scanning timeouts. If you were experiencing "MCP error -32001: Request timed out" errors with Smithery, this update resolves those issues with improved lazy loading and configuration.
-
-> ⚠️ **Version 2.0.10 Update:** 
-> Version 2.0.10 includes critical fixes for server timeout issues that were causing connections to drop after 60 seconds. If you were experiencing "MCP error -32001: Request timed out" errors, this update resolves those issues with proper connection handling.
 
 > ⚠️  The tasks.jsonl is located in ~/.mcp-think-tank/. The file is separated from the kg file, as the think tank could get confused by previously created tasks in the kg file. Delete the content of the tasks.jsonl file if the file becomes too large, or if you want to start a new project and insure there are no tasks in the file. In a future version tasks might be merged with the kg file to insure compleated tasks and relations are stored in memory and there are no duplicate tasks.
 
@@ -288,30 +270,6 @@ README.md
 
 For more details on MCP servers, see [Cursor MCP documentation](https://docs.cursor.com/context/model-context-protocol).
 
-## Logging
-
-MCP Think Tank includes a comprehensive structured logging system:
-
-### Core Logging Features (v2.1.0+)
-
-* **Context-Aware Logging**: Each module has its own named logger for better debugging
-* **Log Levels**: Support for different severity levels (debug, info, warn, error)
-* **Detailed Error Logging**: Enhanced error reporting with stack traces
-* **Environment Configuration**: Control logging behavior with environment variables
-
-### Configuration Options
-
-* `LOG_LEVEL`: Set minimum log level (`debug`, `info`, `warn`, `error`, default: `info`)
-* `MCP_LOG_FILE`: Enable/disable file logging (default: `false`)
-* `MCP_DEBUG`: Quick way to enable debug logging (default: `false`)
-
-### Legacy Logging Support
-
-For compatibility with older versions:
-
-* Logs are written to `~/.mcp-think-tank/logs/mcp-think-tank.log` when file logging is enabled
-* Log files automatically rotate (max 10MB per file, renamed with timestamp)
-* Only Node.js built-in modules are used for logging
 
 ## Project Rule Setup (for Cursor/AI)
 
