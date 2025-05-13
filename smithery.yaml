@@ -1,5 +1,5 @@
 # Smithery configuration file
-name: "@flight505/mcp-think-tank"
+name: "mcp-think-tank"
 description: "An MCP server that provides reasoning and knowledge graph capabilities for AI assistants"
 version: "2.1.0-beta.1"
 displayName: "MCP Think Tank"
@@ -21,10 +21,9 @@ build:
   dockerfile: Dockerfile
   dockerBuildPath: .
 
-# Server configuration for Smithery compatibility 
-# Using streamable-http instead of stdio for better compatibility
+# Server configuration for Smithery compatibility
 startCommand:
-  type: streamable-http
+  type: stdio
   configSchema:
     type: object
     properties:
@@ -35,10 +34,6 @@ startCommand:
       exaApiKey:
         type: string
         description: "API key for Exa web search functionality"
-      toolLimit:
-        type: number
-        description: "Maximum tool calls per session"
-        default: 25
     required: []
   commandFunction: |-
     config => ({
@@ -47,14 +42,6 @@ startCommand:
       env: {
         ...config,
         NODE_ENV: 'production',
-        MCP_TRANSPORT: 'streamable-http',
-        MCP_HOST: '0.0.0.0',
-        MCP_PORT: '8000',
-        MCP_PATH: '/mcp',
-        MEMORY_PATH: config.memoryPath || '/tmp/memory.jsonl',
-        TOOL_LIMIT: String(config.toolLimit || 25),
-        MCP_DEBUG: 'true',
-        AUTO_LINK: 'true',
-        SMITHERY_DEPLOYMENT: 'true'
+        MCP_TRANSPORT: 'stdio'
       }
     })
