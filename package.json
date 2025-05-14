@@ -1,6 +1,6 @@
 {
   "name": "mcp-think-tank",
-  "version": "2.1.0-beta.1",
+  "version": "2.0.7",
   "description": "Structured thinking and knowledge management tool for Model Context Protocol",
   "main": "dist/server.js",
   "type": "module",
