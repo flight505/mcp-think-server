@@ -99,6 +99,13 @@ export function wrapFastMCP(server: FastMCP, defaultAgentId: string = 'default')
           // Get the agent ID from context or use default
           const agentId = context?.agentId || defaultAgentId;
           
+          // Reset tool manager counter at the start of a new user interaction
+          // This ensures the tool call limit only applies to consecutive tool calls within a single interaction
+          if (context?.isNewTurn === true || context?.conversation?.isNewMessage === true || context?.isFirstToolInRequest === true) {
+            console.error('[INFO] [tools] Resetting tool call limit counter for new user interaction');
+            toolManager.reset();
+          }
+          
           // Check if this is an Exa search tool that needs special handling
           if (URL_TOOLS.includes(tool.name)) {
             return await handleUrlTool(tool.name, params, agentId, originalExecute, context);
@@ -149,6 +156,21 @@ export function wrapFastMCP(server: FastMCP, defaultAgentId: string = 'default')
     // Add the wrapped tool to FastMCP
     return originalAddTool(wrappedTool);
   };
+  
+  // Hook into the request handler to reset tool counter for each new request
+  // @ts-ignore - handleRequest might not be in the type definitions but exists at runtime
+  const originalHandleRequest = server.handleRequest?.bind(server);
+  if (originalHandleRequest) {
+    // @ts-ignore - we're extending the server with our own functionality
+    server.handleRequest = async (...args: unknown[]) => {
+      // Reset tool counter at the start of each new request
+      toolManager.reset();
+      console.error('[INFO] [tools] Tool call limit counter reset for new request');
+      
+      // Call original handler
+      return await originalHandleRequest(...args);
+    };
+  }
 }
 
 /**
@@ -268,7 +290,7 @@ async function handleFileTool(
   }
 }
 
-// Add a static property to store the tool cache
+// Attach tool cache to wrapFastMCP function for tracking
 wrapFastMCP.toolCache = new Map<string, Tool<any, any>>();
 
 /**

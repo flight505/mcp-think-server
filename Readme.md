@@ -126,7 +126,7 @@ Leveraging the Exa API, MCP Think Tank provides tools for fetching external info
 
 MCP Think Tank includes comprehensive features to ensure tools are used responsibly and efficiently.
 
-*   **Usage Limits**: A configurable maximum number of tool calls per session (`TOOL_LIMIT`, default: 25) prevents runaway usage.
+*   **Usage Limits**: A configurable maximum number of tool calls per user interaction (`TOOL_LIMIT`, default: 25). The limit only counts consecutive tool calls within a single user message and resets automatically when the user sends a new message.
 *   **Automatic Tracking**: All tool calls are logged and monitored.
 *   **Graceful Degradation**: When limits are reached, the system attempts to return partial results.
 *   **Intelligent Caching**: Identical tool calls and repeated file/URL content fetches are automatically cached, reducing execution time and resource usage. Caching behavior and size are configurable (`CACHE_TOOL_CALLS`, `CONTENT_CACHE`).
@@ -200,7 +200,7 @@ MCP Think Tank is configured primarily through environment variables or via your
 
 ### Advanced Configuration
 
-*   `TOOL_LIMIT`: Maximum number of tool calls allowed per session (default: `25`).
+*   `TOOL_LIMIT`: Maximum number of tool calls allowed per user interaction (default: `25`). The counter resets automatically with each new user message, ensuring you can make up to 25 consecutive tool calls within a single interaction.
 *   `CACHE_TOOL_CALLS`: Enable/disable caching of identical tool calls (default: `true`).
 *   `TOOL_CACHE_SIZE`: Maximum number of cached tool calls (default: `100`).
 *   `CACHE_CONTENT`: Enable/disable content-based caching for file/URL operations (default: `true`).
@@ -411,7 +411,7 @@ MCP Think Tank incorporates built-in optimizations to ensure efficient operation
 ### Tool Call Optimization
 
 *   Identical tool calls within a session are automatically detected and served from a cache.
-*   Prevents counting duplicate calls against the session limit.
+*   Prevents counting duplicate calls against the interaction limit.
 *   Improves responsiveness for repetitive tool requests.
 *   Cache size is configurable (`TOOL_CACHE_SIZE`).
 
