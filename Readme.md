@@ -136,7 +136,7 @@ MCP Think Tank includes comprehensive features to ensure tools are used responsi
 ## 📦 Installation
 
 > ⚠️ **Important Note READ THIS:** 
-> When updating to a new version of MCP Think Tank in Cursor or Claude you might create multiple instances of the MCP Think Tank server, causing aditional Node.js instances to be created, dragging down your system performance - this is a known issue with MCP servers - kill all mcp-think-tank processes in your system and check you have only one node.js instance running.
+> When updating to a new version of MCP Think Tank in Cursor or Claude you might create multiple instances of the MCP Think Tank server, causing additional Node.js instances to be created, dragging down your system performance - this is a known issue with MCP servers - kill all mcp-think-tank processes in your system and check you have only one node.js instance running.
 
 
 > ⚠️  The tasks.jsonl is located in ~/.mcp-think-tank/. The file is separated from the kg file, as the think tank could get confused by previously created tasks in the kg file. Delete the content of the tasks.jsonl file if the file becomes too large, or if you want to start a new project and insure there are no tasks in the file. In a future version tasks might be merged with the kg file to insure compleated tasks and relations are stored in memory and there are no duplicate tasks.
