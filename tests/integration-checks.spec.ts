@@ -80,10 +80,8 @@ describe('MCP Think Tank Integration Checks', () => {
   it('initializes memory file correctly', () => {
     // This test just checks if the memory file exists and can be read
     expect(existsSync(tempMemoryPath)).toBe(true);
-    
-    // Read the file - this shouldn't throw
-    const content = readFileSync(tempMemoryPath, 'utf8');
-    // Memory file might be empty or have content, but should be readable
-    expect(() => content).not.toThrow();
+
+    // Attempt to read the file - should not throw
+    expect(() => readFileSync(tempMemoryPath, 'utf8')).not.toThrow();
   });
 }); 
