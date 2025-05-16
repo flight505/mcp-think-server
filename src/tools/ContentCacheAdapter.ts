@@ -72,8 +72,9 @@ export async function fetchJson(url: string, config?: AxiosRequestConfig): Promi
     
     // Perform a fresh fetch with axios
     const response = await axios.get(url, config);
-    
-    // The actual response will be cached by fetchUrlWithCache on subsequent calls
+
+    // Return the data directly; fetchUrlWithCache handles caching when this
+    // function is called again
     return response.data;
   } catch (error) {
     console.error(`[ContentCacheAdapter] Error fetching JSON: ${error}`);
