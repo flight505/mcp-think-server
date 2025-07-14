@@ -19,7 +19,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![smithery badge](https://smithery.ai/badge/@flight505/mcp-think-tank)](https://smithery.ai/server/@flight505/mcp-think-tank)
 <a href="https://mseep.ai/app/flight505-mcp-think-tank">
-  <img src="https://mseep.net/pr/flight505-mcp-think-tank-badge.png" alt="MseeP.ai Security Assessment Badge" width="40">
+  <img src="https://mseep.net/pr/flight505-mcp-think-tank-badge.png" alt="MseeP.ai Security Assessment Badge" width="50">
 </a>
 
 </div>
