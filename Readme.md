@@ -1,4 +1,6 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flight505-mcp-think-tank-badge.png",width="120")](https://mseep.ai/app/flight505-mcp-think-tank)
+<a href="https://mseep.ai/app/flight505-mcp-think-tank">
+  <img src="https://mseep.net/pr/flight505-mcp-think-tank-badge.png" alt="MseeP.ai Security Assessment Badge" width="120">
+</a>
 
 # MCP Think Tank
 
