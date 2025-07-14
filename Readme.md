@@ -1,4 +1,4 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flight505-mcp-think-tank-badge.png)](https://mseep.ai/app/flight505-mcp-think-tank)
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flight505-mcp-think-tank-badge.png",width="120")](https://mseep.ai/app/flight505-mcp-think-tank)
 
 # MCP Think Tank
 
